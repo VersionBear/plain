@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-canvas: 247 245 242;
+  --color-panel: 252 251 248;
+  --color-line: 231 225 216;
+  --color-ink: 30 26 22;
+  --color-muted: 111 102 91;
+  --color-accent: 216 208 194;
+  --color-pin: 237 230 218;
+  --color-elevated: 250 248 244;
+  --color-chrome: 232 226 216;
+  color: rgb(var(--color-ink));
+  background: rgb(var(--color-canvas));
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  background: rgb(var(--color-canvas));
+  color: rgb(var(--color-ink));
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+:root.dark,
+html.dark,
+body.dark {
+  --color-canvas: 26 24 22;
+  --color-panel: 32 29 27;
+  --color-line: 67 61 56;
+  --color-ink: 236 230 222;
+  --color-muted: 167 157 145;
+  --color-accent: 107 97 88;
+  --color-pin: 48 42 38;
+  --color-elevated: 40 36 33;
+  --color-chrome: 69 62 56;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--color-accent)) transparent;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Aptos, "Segoe UI", "SF Pro Text", system-ui, sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgb(var(--color-accent));
+  color: rgb(var(--color-ink));
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: rgb(var(--color-accent));
+}
+
+.hairline {
+  box-shadow: inset 0 0 0 1px rgba(111, 102, 91, 0.12);
+}
+
+:root.dark .hairline,
+html.dark .hairline,
+body.dark .hairline {
+  box-shadow: inset 0 0 0 1px rgba(167, 157, 145, 0.14);
+}
+
+.editor-surface:empty::before {
+  content: attr(data-placeholder);
+  color: rgb(var(--color-muted) / 0.55);
+}
+
+.editor-surface h1,
+.editor-surface h2,
+.editor-surface h3,
+.editor-surface h4,
+.editor-surface h5,
+.editor-surface h6,
+.editor-surface p,
+.editor-surface blockquote,
+.editor-surface ul,
+.editor-surface ol {
+  margin: 0 0 1rem;
+}
+
+.editor-surface h1 {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 2.2rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+
+.editor-surface h2 {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 1.7rem;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 500;
+}
+
+.editor-surface blockquote {
+  border-left: 2px solid rgb(var(--color-accent));
+  padding-left: 1rem;
+  color: rgb(var(--color-muted));
+}
+
+.editor-surface ul,
+.editor-surface ol {
+  padding-left: 1.5rem;
+}
+
+.editor-surface a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--color-accent));
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  word-break: break-word;
+}
