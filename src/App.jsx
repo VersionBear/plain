@@ -1,4 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import packageJson from '../package.json';
 import EditorPane from './components/EditorPane';
 import Sidebar from './components/Sidebar';
 import { useTheme } from './hooks/useTheme';
@@ -6,6 +7,7 @@ import { useNotesStore } from './store/useNotesStore';
 import { filterNotes, getNextSelectedNoteId, sortNotes } from './utils/notes';
 
 function App() {
+  const appVersion = packageJson.version;
   const { theme, toggleTheme } = useTheme();
   const notes = useNotesStore((state) => state.notes);
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
@@ -14,6 +16,7 @@ function App() {
   const searchQuery = useNotesStore((state) => state.searchQuery);
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
 
   const visibleNotes = useMemo(() => {
     return filterNotes(sortNotes(notes), deferredSearchQuery);
@@ -45,7 +48,12 @@ function App() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="font-serif text-[1.65rem] tracking-calm text-ink">Plain</p>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted">Mobile workspace</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs uppercase tracking-[0.18em] text-muted">Mobile workspace</p>
+                <span className="rounded-full border border-line/70 bg-elevated/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-muted">
+                  v{appVersion}
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -94,19 +102,30 @@ function App() {
             onNoteSelect={() => setIsMobileSidebarOpen(false)}
             isMobileOpen={isMobileSidebarOpen}
             onCloseMobile={() => setIsMobileSidebarOpen(false)}
+            isCollapsed={isDesktopSidebarCollapsed}
           />
-          <EditorPane totalNotes={notes.length} searchQuery={searchQuery} />
+          <EditorPane
+            totalNotes={notes.length}
+            searchQuery={searchQuery}
+            isSidebarCollapsed={isDesktopSidebarCollapsed}
+            onToggleSidebar={() => setIsDesktopSidebarCollapsed((current) => !current)}
+          />
         </div>
 
         <footer className="px-4 pb-6 pt-4 text-center md:px-0 md:pb-2">
-          <a
-            href="https://versionbear.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm text-muted transition hover:text-ink"
-          >
-            Made by VersionBear, versionbear.com
-          </a>
+          <div className="flex flex-col items-center justify-center gap-1.5 text-sm text-muted md:flex-row md:gap-3">
+            <span className="rounded-full border border-line/70 bg-elevated/55 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-muted">
+              v{appVersion}
+            </span>
+            <a
+              href="https://versionbear.com"
+              target="_blank"
+              rel="noreferrer"
+              className="transition hover:text-ink"
+            >
+              Made by VersionBear, versionbear.com
+            </a>
+          </div>
         </footer>
       </div>
     </div>

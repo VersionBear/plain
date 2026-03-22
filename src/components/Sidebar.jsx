@@ -11,6 +11,7 @@ function Sidebar({
   onNoteSelect,
   isMobileOpen,
   onCloseMobile,
+  isCollapsed,
 }) {
   const createNote = useNotesStore((state) => state.createNote);
   const handleCreateNote = onCreateNote ?? createNote;
@@ -109,7 +110,13 @@ function Sidebar({
         </aside>
       </div>
 
-      <aside className="hidden w-full shrink-0 flex-col border-b border-line/80 bg-panel/95 md:flex md:min-h-full md:w-[356px] md:border-b-0 md:border-r">
+      <aside
+        className={`hidden w-full shrink-0 flex-col border-b border-line/80 bg-panel/95 transition-[width,opacity,border-color] duration-300 md:flex md:min-h-full md:border-b-0 md:overflow-hidden ${
+          isCollapsed
+            ? 'md:w-0 md:border-r-0 md:opacity-0 md:pointer-events-none'
+            : 'md:w-[356px] md:border-r md:opacity-100'
+        }`}
+      >
         {sidebarContent}
       </aside>
     </>

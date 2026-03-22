@@ -1,11 +1,35 @@
 import { useNotesStore } from '../store/useNotesStore';
 
-function EmptyEditorState({ totalNotes, searchQuery }) {
+function EmptyEditorState({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSidebar }) {
   const createNote = useNotesStore((state) => state.createNote);
 
   return (
     <main className="flex flex-1 items-center justify-center bg-canvas px-6 py-12">
       <div className="max-w-xl text-center">
+        <div className="mb-6 flex justify-center">
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            title={isSidebarCollapsed ? 'Show notes sidebar' : 'Hide notes sidebar'}
+            aria-label={isSidebarCollapsed ? 'Show notes sidebar' : 'Hide notes sidebar'}
+            className="hidden h-10 w-10 items-center justify-center rounded-full border border-line/80 bg-elevated/85 text-muted transition hover:border-line hover:bg-panel hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent md:inline-flex"
+          >
+            {isSidebarCollapsed ? (
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6.5 4.5h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7" />
+                <path d="M4.5 4.5v11" />
+                <path d="m10.75 7.25-3 2.75 3 2.75" />
+              </svg>
+            ) : (
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6.5 4.5h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7" />
+                <path d="M4.5 4.5v11" />
+                <path d="m9.25 7.25 3 2.75-3 2.75" />
+              </svg>
+            )}
+          </button>
+        </div>
+
         <p className="font-serif text-4xl tracking-calm text-ink md:text-5xl">
           {totalNotes === 0 ? 'Open. Write. Done.' : 'A smaller place for your thoughts.'}
         </p>

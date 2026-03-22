@@ -4,7 +4,7 @@ import EmptyEditorState from './EmptyEditorState';
 import EditorHeader from './EditorHeader';
 import NoteEditor from './NoteEditor';
 
-function EditorPane({ totalNotes, searchQuery }) {
+function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSidebar }) {
   const notes = useNotesStore((state) => state.notes);
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
   const note = useMemo(
@@ -13,12 +13,23 @@ function EditorPane({ totalNotes, searchQuery }) {
   );
 
   if (!note) {
-    return <EmptyEditorState totalNotes={totalNotes} searchQuery={searchQuery} />;
+    return (
+      <EmptyEditorState
+        totalNotes={totalNotes}
+        searchQuery={searchQuery}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={onToggleSidebar}
+      />
+    );
   }
 
   return (
-    <main className="flex min-h-[55vh] flex-1 flex-col bg-canvas">
-      <EditorHeader note={note} />
+    <main className="flex min-h-[55vh] flex-1 flex-col bg-canvas md:min-h-0">
+      <EditorHeader
+        note={note}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleSidebar={onToggleSidebar}
+      />
       <NoteEditor note={note} />
     </main>
   );

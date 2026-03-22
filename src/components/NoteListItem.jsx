@@ -30,13 +30,30 @@ function NoteListItem({ note, onSelect }) {
       />
       <div className="flex items-start justify-between gap-4">
         <p className="line-clamp-1 pr-2 text-sm font-medium text-ink">{getNoteTitle(note)}</p>
-        <div className="shrink-0 text-right">
+        <div className="flex shrink-0 items-center gap-2 self-start text-xs text-muted">
           {note.pinned ? (
-            <span className="mb-1 inline-flex rounded-full bg-canvas/85 px-2 py-1 text-[10px] uppercase tracking-[0.18em] text-muted">
-              Pinned
+            <span
+              aria-label="Pinned note"
+              title="Pinned note"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-canvas/85 text-muted"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 20 20"
+                className="h-3.5 w-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M7.25 4.75h5.5" />
+                <path d="M8 4.75v3.2l-2.5 2.1h9l-2.5-2.1v-3.2" />
+                <path d="m10 10 0 5.25" />
+              </svg>
             </span>
           ) : null}
-          <p className="text-xs text-muted">{formatNoteTimestamp(note.updatedAt)}</p>
+          <p>{formatNoteTimestamp(note.updatedAt)}</p>
         </div>
       </div>
       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{getNotePreview(note)}</p>

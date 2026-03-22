@@ -1,7 +1,7 @@
 import { useNotesStore } from '../store/useNotesStore';
 import { formatEditorMeta } from '../utils/date';
 
-function EditorHeader({ note }) {
+function EditorHeader({ note, isSidebarCollapsed, onToggleSidebar }) {
   const deleteNote = useNotesStore((state) => state.deleteNote);
   const togglePinned = useNotesStore((state) => state.togglePinned);
   const meta = formatEditorMeta(note.createdAt, note.updatedAt);
@@ -9,7 +9,29 @@ function EditorHeader({ note }) {
   return (
     <header className="border-b border-line/70 bg-panel/55 px-5 py-4 backdrop-blur md:px-8 md:py-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-start gap-3">
+          <button
+            type="button"
+            onClick={onToggleSidebar}
+            title={isSidebarCollapsed ? 'Show notes sidebar' : 'Hide notes sidebar'}
+            aria-label={isSidebarCollapsed ? 'Show notes sidebar' : 'Hide notes sidebar'}
+            className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line/80 bg-elevated/85 text-muted transition hover:border-line hover:bg-panel hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent md:inline-flex"
+          >
+            {isSidebarCollapsed ? (
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6.5 4.5h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7" />
+                <path d="M4.5 4.5v11" />
+                <path d="m10.75 7.25-3 2.75 3 2.75" />
+              </svg>
+            ) : (
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6.5 4.5h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7" />
+                <path d="M4.5 4.5v11" />
+                <path d="m9.25 7.25 3 2.75-3 2.75" />
+              </svg>
+            )}
+          </button>
+
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
             <span className="inline-flex rounded-full border border-line/80 bg-elevated/70 px-2.5 py-1 uppercase tracking-[0.16em] text-muted">
               Private on this device

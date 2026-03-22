@@ -134,13 +134,84 @@ body.dark .hairline {
   color: rgb(var(--color-muted));
 }
 
+.editor-surface hr {
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid rgb(var(--color-line));
+}
+
 .editor-surface ul,
 .editor-surface ol {
   padding-left: 1.5rem;
+  list-style-position: outside;
+}
+
+.editor-surface ul {
+  list-style-type: disc;
+}
+
+.editor-surface ol {
+  list-style-type: decimal;
+}
+
+.editor-surface li + li {
+  margin-top: 0.35rem;
+}
+
+.editor-checklist-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  line-height: 1.75;
+}
+
+.editor-checklist-item input[type='checkbox'] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0.35rem 0 0;
+  flex: none;
+  accent-color: rgb(var(--color-ink));
+}
+
+.editor-checklist-text {
+  min-width: 0;
+  line-height: 1.75;
+}
+
+.editor-checklist-item:has(input:checked) .editor-checklist-text {
+  color: rgb(var(--color-muted));
+  text-decoration: line-through;
+}
+
+.editor-image-block {
+  width: var(--image-width, 100%);
+  max-width: 100%;
+  margin: 1.5rem 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.editor-image-block img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  border-radius: 1.25rem;
+  border: 1px solid rgb(var(--color-line) / 0.9);
+  box-shadow: 0 18px 40px rgba(30, 26, 22, 0.08);
+}
+
+.editor-image-block figcaption {
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: rgb(var(--color-muted));
 }
 
 .editor-surface a {
   color: inherit;
+  cursor: pointer;
   text-decoration: underline;
   text-decoration-color: rgb(var(--color-accent));
   text-decoration-thickness: 2px;

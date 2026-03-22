@@ -2,7 +2,12 @@ export function getPlainTextFromContent(content) {
   return content
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<input[^>]*type=["']checkbox["'][^>]*checked[^>]*>/gi, '[x] ')
+    .replace(/<input[^>]*type=["']checkbox["'][^>]*>/gi, '[ ] ')
+    .replace(/<img[^>]*alt=["']([^"']*)["'][^>]*>/gi, ' $1 ')
+    .replace(/<img[^>]*>/gi, ' [Image] ')
     .replace(/<\/(p|div|li|blockquote|h1|h2|h3|h4|h5|h6)>/gi, '\n')
+    .replace(/<\/(figure|figcaption)>/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/gi, ' ')
