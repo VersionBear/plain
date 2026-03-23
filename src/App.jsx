@@ -42,32 +42,27 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas text-ink">
-      <div className="mx-auto flex min-h-screen max-w-[1560px] flex-col md:px-4 md:py-4">
-        <div className="sticky top-0 z-20 border-b border-line/80 bg-canvas/92 px-4 py-3 backdrop-blur md:hidden">
+    <div className="min-h-dvh bg-canvas text-ink">
+      <div className="mx-auto flex min-h-dvh max-w-[1560px] flex-col md:px-4 md:py-4">
+        <div className="sticky top-0 z-20 border-b border-line/70 bg-canvas/88 px-4 py-2.5 backdrop-blur md:hidden">
           <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="font-serif text-[1.65rem] tracking-calm text-ink">Plain</p>
-              <div className="flex items-center gap-2">
-                <p className="text-xs uppercase tracking-[0.18em] text-muted">Mobile workspace</p>
-                <span className="rounded-full border border-line/70 bg-elevated/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.18em] text-muted">
-                  v{appVersion}
-                </span>
-              </div>
+            <div className="min-w-0">
+              <p className="font-serif text-[1.5rem] tracking-calm text-ink">Plain</p>
+              <p className="mt-0.5 text-[10px] uppercase tracking-[0.22em] text-muted">v{appVersion} local writing space</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setIsMobileSidebarOpen(true)}
-                className="hairline rounded-full bg-elevated/90 px-3.5 py-2 text-sm text-ink transition hover:bg-elevated focus:outline-none focus:ring-2 focus:ring-accent"
+                className="hairline rounded-full bg-elevated/88 px-3 py-2 text-sm text-ink transition hover:bg-elevated focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 Notes
               </button>
               <button
                 type="button"
                 onClick={handleCreateNote}
-                className="hairline rounded-full bg-ink px-3.5 py-2 text-sm text-canvas transition hover:bg-ink/90 focus:outline-none focus:ring-2 focus:ring-accent"
+                className="hairline rounded-full bg-panel px-3 py-2 text-sm text-ink transition hover:bg-elevated focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 New
               </button>
@@ -75,7 +70,7 @@ function App() {
                 type="button"
                 onClick={toggleTheme}
                 aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                className="hairline inline-flex h-10 w-10 items-center justify-center rounded-full bg-elevated/90 text-muted transition hover:bg-elevated hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+                className="hairline inline-flex h-9 w-9 items-center justify-center rounded-full bg-elevated/88 text-muted transition hover:bg-elevated hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 {theme === 'dark' ? (
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
@@ -92,7 +87,7 @@ function App() {
           </div>
         </div>
 
-        <div className="flex min-h-screen flex-1 flex-col overflow-hidden md:min-h-0 md:flex-row md:rounded-[28px] md:border md:border-line/80 md:bg-panel/60 md:shadow-[0_10px_30px_rgba(28,25,23,0.04)]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row md:rounded-[28px] md:border md:border-line/80 md:bg-panel/60 md:shadow-[0_10px_30px_rgba(28,25,23,0.04)]">
           <Sidebar
             notes={visibleNotes}
             totalNotes={notes.length}

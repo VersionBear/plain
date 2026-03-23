@@ -420,12 +420,42 @@ function NoteEditor({ note }) {
   const fileInputRef = useRef(null);
   const linkTextInputRef = useRef(null);
   const lastSyncedContentRef = useRef('');
+  const pendingContentRef = useRef(null);
+  const saveTimerRef = useRef(null);
   const savedRangeRef = useRef(null);
   const selectedImageRef = useRef(null);
   const [toolbarState, setToolbarState] = useState(emptyToolbarState);
   const [selectedImageWidth, setSelectedImageWidth] = useState(null);
   const [isLinkPanelOpen, setIsLinkPanelOpen] = useState(false);
   const [linkDraft, setLinkDraft] = useState({ text: '', url: '' });
+
+  const clearPendingSave = () => {
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+  };
+
+  const flushPendingContent = (touchUpdatedAt = true) => {
+    const pendingContent = pendingContentRef.current;
+
+    clearPendingSave();
+
+    if (pendingContent == null || pendingContent === note.content) {
+      pendingContentRef.current = null;
+      return;
+    }
+
+    pendingContentRef.current = null;
+    updateNote(note.id, { content: pendingContent }, { touchUpdatedAt });
+  };
+
+  const scheduleContentSave = () => {
+    clearPendingSave();
+    saveTimerRef.current = window.setTimeout(() => {
+      flushPendingContent(false);
+    }, 450);
+  };
 
   const saveSelection = () => {
     const editor = editorRef.current;
@@ -515,6 +545,8 @@ function NoteEditor({ note }) {
   useEffect(() => {
     const editor = editorRef.current;
 
+    flushPendingContent(true);
+
     if (!editor) {
       return;
     }
@@ -535,6 +567,12 @@ function NoteEditor({ note }) {
     setIsLinkPanelOpen(false);
     setLinkDraft({ text: '', url: '' });
   }, [note.id]);
+
+  useEffect(() => {
+    return () => {
+      flushPendingContent(true);
+    };
+  }, []);
 
   useEffect(() => {
     document.addEventListener('selectionchange', syncToolbarState);
@@ -577,7 +615,8 @@ function NoteEditor({ note }) {
     }
 
     lastSyncedContentRef.current = nextContent;
-    updateNote(note.id, { content: nextContent });
+    pendingContentRef.current = nextContent;
+    scheduleContentSave();
     syncToolbarState();
   };
 
@@ -806,8 +845,8 @@ function NoteEditor({ note }) {
   };
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col px-5 py-7 md:px-8 md:py-9">
-      <div className="mx-auto flex min-h-0 w-full max-w-[1220px] flex-1 flex-col">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-4 py-4 md:px-8 md:py-9">
+      <div className="mx-auto flex min-h-0 w-full max-w-[1220px] flex-1 flex-col overflow-hidden">
         <input
           ref={fileInputRef}
           type="file"
@@ -822,10 +861,10 @@ function NoteEditor({ note }) {
           value={note.title}
           onChange={(event) => updateNote(note.id, { title: event.target.value })}
           placeholder="Untitled"
-          className="w-full border-0 bg-transparent p-0 font-serif text-[2.3rem] font-medium tracking-calm text-ink placeholder:text-muted/75 focus:outline-none focus:ring-0 md:text-[3.1rem]"
+          className="w-full border-0 bg-transparent p-0 font-serif text-[2rem] font-medium tracking-calm text-ink placeholder:text-muted/75 focus:outline-none focus:ring-0 md:text-[3.1rem]"
         />
 
-        <div className="-mx-1 mt-5 flex gap-2 overflow-x-auto border-b border-line/70 px-1 pb-4">
+        <div className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-3 md:mt-5 md:border-b md:border-line/70 md:pb-4">
           {toolbarActions.map((action) => (
             <button
               key={action.id}
@@ -835,10 +874,10 @@ function NoteEditor({ note }) {
               aria-pressed={isActionActive(action)}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => handleToolbarAction(action)}
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-accent ${
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10 ${
                 isActionActive(action)
                   ? 'border-accent bg-accent text-ink shadow-sm'
-                  : 'border-line/80 bg-elevated/85 text-muted hover:border-line hover:bg-panel hover:text-ink'
+                  : 'border-line/70 bg-elevated/72 text-muted hover:border-line hover:bg-panel hover:text-ink'
               }`}
             >
               <ToolbarIcon name={action.icon} />
@@ -848,7 +887,7 @@ function NoteEditor({ note }) {
 
         {isLinkPanelOpen ? (
           <form
-            className="mt-4 flex flex-col gap-2 rounded-[22px] border border-line/70 bg-panel/75 p-3 md:flex-row md:items-center"
+            className="mt-3 flex flex-col gap-2 rounded-[22px] border border-line/70 bg-panel/72 p-3 md:mt-4 md:flex-row md:items-center"
             onSubmit={(event) => {
               event.preventDefault();
               handleLinkApply();
@@ -898,7 +937,7 @@ function NoteEditor({ note }) {
         ) : null}
 
         {selectedImageWidth ? (
-          <div className="mt-4 flex items-center gap-2 overflow-x-auto rounded-[22px] border border-line/70 bg-panel/75 px-3 py-2">
+          <div className="mt-3 flex items-center gap-2 overflow-x-auto rounded-[22px] border border-line/70 bg-panel/72 px-3 py-2 md:mt-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line/70 bg-elevated/70 text-muted">
               <ToolbarIcon name="image" />
             </span>
@@ -923,9 +962,10 @@ function NoteEditor({ note }) {
           </div>
         ) : null}
 
-        <div className="mt-5 flex min-h-[360px] min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-line/75 bg-elevated/80 shadow-panel md:min-h-[520px]">
-          <div className="flex items-center justify-between border-b border-line/70 px-4 py-3 text-xs uppercase tracking-[0.18em] text-muted">
-            <span>Rich text editor</span>
+        <div className="mt-2 flex min-h-[min(58dvh,28rem)] min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border border-line/70 bg-elevated/72 shadow-panel md:mt-5 md:min-h-[360px] md:rounded-[28px] md:border-line/75 md:bg-elevated/80 md:h-[clamp(32rem,64dvh,46rem)] md:min-h-0 md:flex-none">
+          <div className="flex items-center justify-between border-b border-line/70 px-4 py-2 text-[10px] uppercase tracking-[0.18em] text-muted md:px-4 md:py-3 md:text-xs">
+            <span className="hidden md:inline">Rich text editor</span>
+            <span className="md:hidden">Writing space</span>
             <span>{getPlainTextFromContent(note.content).trim() ? 'Formatting saves live' : 'Start writing'}</span>
           </div>
 
@@ -938,6 +978,7 @@ function NoteEditor({ note }) {
             onBlur={() => {
               commitEditorState();
               saveSelection();
+              flushPendingContent(true);
             }}
             onFocus={() => {
               saveSelection();
@@ -957,8 +998,14 @@ function NoteEditor({ note }) {
                 event.target instanceof Element ? event.target.closest('a[href]') : null;
 
               if (clickedLink instanceof HTMLAnchorElement) {
-                event.preventDefault();
-                window.open(clickedLink.href, '_blank', 'noopener,noreferrer');
+                if (event.metaKey || event.ctrlKey) {
+                  event.preventDefault();
+                  window.open(clickedLink.href, '_blank', 'noopener,noreferrer');
+                  saveSelection();
+                  syncToolbarState();
+                  return;
+                }
+
                 saveSelection();
                 syncToolbarState();
                 return;
@@ -994,7 +1041,7 @@ function NoteEditor({ note }) {
               document.execCommand('insertText', false, text);
               commitEditorState();
             }}
-            className="editor-surface min-h-0 flex-1 overflow-y-auto border-0 bg-transparent px-4 py-4 text-[15px] leading-8 text-ink focus:outline-none md:text-base"
+            className="editor-surface min-h-0 flex-1 overflow-y-auto overscroll-contain border-0 bg-transparent px-4 py-4 text-[15px] leading-8 text-ink focus:outline-none md:text-base"
           />
         </div>
       </div>

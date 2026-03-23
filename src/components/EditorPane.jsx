@@ -24,7 +24,7 @@ function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSideb
   }
 
   return (
-    <main className="flex min-h-[55vh] flex-1 flex-col bg-canvas md:min-h-0">
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-canvas">
       <EditorHeader
         note={note}
         isSidebarCollapsed={isSidebarCollapsed}

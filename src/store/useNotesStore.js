@@ -18,7 +18,7 @@ export const useNotesStore = create()(
           selectedNoteId: note.id,
         }));
       },
-      updateNote: (noteId, updates) => {
+      updateNote: (noteId, updates, options = {}) => {
         set((state) => {
           const note = state.notes.find((entry) => entry.id === noteId);
 
@@ -35,10 +35,11 @@ export const useNotesStore = create()(
             return state;
           }
 
+          const { touchUpdatedAt = true } = options;
           const updatedNote = {
             ...note,
             ...updates,
-            updatedAt: Date.now(),
+            updatedAt: touchUpdatedAt ? Date.now() : note.updatedAt,
           };
 
           return {

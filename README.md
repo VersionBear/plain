@@ -1,58 +1,85 @@
 # Plain
 
-Plain is a calm local-first notes app built with React, Vite, Tailwind CSS, and Zustand.
+Plain is a local-first notes app built with React, Vite, Tailwind CSS, and Zustand.
 
-It focuses on fast writing, rich text editing, and a clean mobile-friendly experience without accounts, sync setup, or extra clutter.
+The current app is centered around a custom rich text editor, quick note capture, and a calm two-pane layout that adapts into a mobile-friendly notes sheet on smaller screens. Notes stay on the current device only. There are no accounts, sync services, or backend dependencies.
 
-Hosted version: [plain.versionbear.com](https://plain.versionbear.com)
+## What It Does
 
-## Features
+- Creates and stores notes locally in the browser with Zustand persistence
+- Uses a custom `contentEditable` rich text editor
+- Supports headings, bold, italic, underline, strikethrough, blockquotes, bullet lists, numbered lists, links, checklist items, dividers, and inline images
+- Lets you pin notes, delete notes, and search across note titles and note content
+- Sorts pinned notes first, then sorts the rest by most recently updated
+- Includes light and dark themes, with the initial theme following the system preference until a local preference is saved
+- Works in a responsive split-pane desktop layout and a mobile editor-first layout with a slide-up notes library
 
-- Rich text editor with live formatting toolbar
-- Local-first note storage in `localStorage`
-- Pin, delete, search, and sort notes
-- Light and dark theme support
-- Dedicated mobile layout with an editor-first flow and slide-up notes sheet
-- Responsive desktop layout with a notes sidebar and editor pane
+## Storage Model
+
+- Notes are stored in `localStorage` under the key `plain-notes`
+- Theme preference is stored in `localStorage` under the key `plain-theme`
+- Note bodies are saved as HTML, not Markdown
+- Inserted images are stored as data URLs inside note content, so large images will increase local browser storage usage
 
 ## Tech Stack
 
 - React 18
 - Vite 5
 - Tailwind CSS 3
-- Zustand
+- Zustand 5
 
-## Getting Started
+## Scripts
 
-### Install dependencies
+```bash
+npm install
+npm run dev
+npm run build
+npm run preview
+```
+
+## Development
+
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-### Start the development server
+2. Start the local dev server:
 
 ```bash
 npm run dev
 ```
 
-### Build for production
+3. Build the production bundle:
 
 ```bash
 npm run build
 ```
 
-### Preview the production build
+4. Preview the production build locally:
 
 ```bash
 npm run preview
 ```
 
-## Project Notes
+## Project Structure
 
-- Notes are stored on the current device only.
-- Theme preference is stored locally.
-- Rich text content is stored as HTML.
+```text
+src/
+  components/      UI for the sidebar, note list, editor pane, and editor controls
+  hooks/           Shared hooks such as theme persistence
+  store/           Zustand note store and persisted app state
+  utils/           Note helpers, date formatting, and an unused markdown renderer utility
+```
+
+## Current Behavior Notes
+
+- If no note is selected, the app auto-selects the next available note
+- Search is live and checks both the note title and plain-text content extracted from saved HTML
+- The editor debounces content persistence during typing and flushes changes on blur/unmount
+- Clicking an inserted image exposes width presets for resizing it in the editor
+- Links can be inserted or edited from the toolbar, and `Ctrl`/`Cmd` click opens them in a new tab
 
 ## License
 
