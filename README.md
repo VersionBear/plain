@@ -8,7 +8,7 @@ The current app is centered around a custom rich text editor, quick note capture
 
 - Creates and stores notes locally in the browser with Zustand persistence
 - Uses a custom `contentEditable` rich text editor
-- Supports headings, bold, italic, underline, strikethrough, blockquotes, bullet lists, numbered lists, links, checklist items, dividers, and inline images
+- Supports headings, bold, italic, underline, strikethrough, blockquotes, bullet lists, numbered lists, links, checklist items, dividers, editable tables with expandable edges and optional headers, and inline images
 - Lets you pin notes, delete notes, and search across note titles and note content
 - Sorts pinned notes first, then sorts the rest by most recently updated
 - Includes light and dark themes, with the initial theme following the system preference until a local preference is saved
@@ -79,6 +79,7 @@ src/
 - Search is live and checks both the note title and plain-text content extracted from saved HTML
 - The editor debounces content persistence during typing and flushes changes on blur/unmount
 - Clicking an inserted image exposes width presets for resizing it in the editor
+- Clicking an inserted table exposes compact desktop controls plus mobile-friendly controls for expanding or trimming any side and toggling top-row or left-column headers
 - Links can be inserted or edited from the toolbar, and `Ctrl`/`Cmd` click opens them in a new tab
 
 ## License

@@ -108,7 +108,8 @@ body.dark .hairline {
 .editor-surface p,
 .editor-surface blockquote,
 .editor-surface ul,
-.editor-surface ol {
+.editor-surface ol,
+.editor-table-wrap {
   margin: 0 0 1rem;
 }
 
@@ -207,6 +208,103 @@ body.dark .hairline {
   text-align: center;
   font-size: 0.9rem;
   color: rgb(var(--color-muted));
+}
+
+.editor-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgb(var(--color-line) / 0.9);
+  border-radius: 1rem;
+  background: rgb(var(--color-panel) / 0.78);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.editor-table-wrap[data-selected='true'] {
+  border-color: rgb(var(--color-accent));
+  box-shadow: 0 0 0 1px rgb(var(--color-accent) / 0.75);
+  background: rgb(var(--color-panel) / 0.9);
+}
+
+.editor-table-wrap table {
+  width: 100%;
+  min-width: 20rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.editor-table-wrap th,
+.editor-table-wrap td {
+  min-width: 8rem;
+  border-right: 1px solid rgb(var(--color-line) / 0.9);
+  border-bottom: 1px solid rgb(var(--color-line) / 0.9);
+  padding: 0.8rem 0.95rem;
+  text-align: left;
+  vertical-align: top;
+  background: rgb(var(--color-elevated) / 0.9);
+}
+
+.editor-table-wrap th {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(var(--color-muted));
+  background: rgb(var(--color-chrome) / 0.6);
+}
+
+.editor-table-wrap tr > *:last-child {
+  border-right: 0;
+}
+
+.editor-table-wrap tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.editor-table-wrap th:focus,
+.editor-table-wrap td:focus {
+  outline: 2px solid rgb(var(--color-accent));
+  outline-offset: -2px;
+}
+
+@media (max-width: 767px) {
+  .editor-table-wrap {
+    border-radius: 1.25rem;
+    box-shadow: 0 12px 30px rgba(30, 26, 22, 0.08);
+  }
+
+  .editor-table-wrap table {
+    min-width: max(100%, 22rem);
+  }
+
+  .editor-table-wrap th,
+  .editor-table-wrap td {
+    min-width: 9rem;
+    padding: 0.95rem 0.9rem;
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .editor-table-wrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    backdrop-filter: blur(10px);
+  }
+
+  .editor-table-wrap tbody th {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    box-shadow: 1px 0 0 rgb(var(--color-line) / 0.9);
+  }
+
+  .editor-table-wrap thead th:first-child {
+    left: 0;
+    z-index: 4;
+  }
 }
 
 .editor-surface a {
