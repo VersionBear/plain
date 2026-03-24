@@ -1,0 +1,10 @@
+export const LIBRARY_VERSION = 1;
+export const NOTES_DIR_NAME = 'notes';
+export const TRASH_DIR_NAME = 'trash';
+export const INDEX_FILE_NAME = 'plain-index.json';
+export const LEGACY_STORAGE_KEY = 'plain-notes';
+export const LEGACY_LIBRARY_KEY = 'plain-library';
+export const LEGACY_IMPORT_FLAG_KEY = 'plain-legacy-import-complete';
+export const FOLDER_DB_NAME = 'plain-storage';
+export const FOLDER_STORE_NAME = 'handles';
+export const FOLDER_HANDLE_KEY = 'notes-folder';

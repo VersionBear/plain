@@ -4,7 +4,8 @@ import { useNotesStore } from '../store/useNotesStore';
 
 function Sidebar({
   notes,
-  totalNotes,
+  activeNotesCount,
+  trashedNotesCount,
   theme,
   toggleTheme,
   onCreateNote,
@@ -12,9 +13,16 @@ function Sidebar({
   isMobileOpen,
   onCloseMobile,
   isCollapsed,
+  activeSection,
+  storageStatus,
+  isHydrated,
 }) {
   const createNote = useNotesStore((state) => state.createNote);
+  const setActiveSection = useNotesStore((state) => state.setActiveSection);
+  const connectFolderStorage = useNotesStore((state) => state.connectFolderStorage);
+  const importLegacyNotes = useNotesStore((state) => state.importLegacyNotes);
   const handleCreateNote = onCreateNote ?? createNote;
+  const currentSectionCount = activeSection === 'trash' ? trashedNotesCount : activeNotesCount;
 
   const sidebarContent = (
     <>
@@ -53,19 +61,94 @@ function Sidebar({
           </div>
         </div>
 
+        <div className="mt-5 rounded-[24px] border border-line/70 bg-elevated/70 p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-muted">Storage</p>
+              <p className="mt-1 text-sm font-medium text-ink">{storageStatus.label}</p>
+            </div>
+            {storageStatus.hasFolderConnection ? (
+              <span className="rounded-full border border-accent/70 bg-accent/25 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-ink">
+                Disk-backed
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-2 text-sm leading-6 text-muted">{storageStatus.detail}</p>
+          {storageStatus.supportsFolderPicker && !storageStatus.hasFolderConnection ? (
+            <button
+              type="button"
+              onClick={() => void connectFolderStorage()}
+              disabled={storageStatus.isConnectingFolder || !isHydrated}
+              className="mt-3 inline-flex items-center rounded-full border border-line/80 bg-panel/88 px-4 py-2 text-sm font-medium text-ink transition hover:border-line hover:bg-panel focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {storageStatus.isConnectingFolder ? 'Connecting folder...' : 'Choose notes folder'}
+            </button>
+          ) : null}
+          {storageStatus.pendingImportCount > 0 ? (
+            <div className="mt-3 rounded-[20px] border border-line/70 bg-panel/78 p-3">
+              <p className="text-sm text-ink">
+                Import {storageStatus.pendingImportCount} older {storageStatus.pendingImportCount === 1 ? 'note' : 'notes'} from legacy browser storage.
+              </p>
+              <button
+                type="button"
+                onClick={() => void importLegacyNotes()}
+                className="mt-3 inline-flex items-center rounded-full border border-line/80 bg-elevated/88 px-4 py-2 text-sm font-medium text-ink transition hover:border-line hover:bg-panel focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                Import legacy notes
+              </button>
+            </div>
+          ) : null}
+          {storageStatus.lastError ? (
+            <p className="mt-3 text-sm leading-6 text-ink">{storageStatus.lastError}</p>
+          ) : null}
+        </div>
+
         <div className="mt-5">
           <SearchInput />
         </div>
       </div>
 
+      <div className="border-b border-line/80 px-5 py-3 md:px-6">
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveSection('notes')}
+            className={`rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-accent ${
+              activeSection === 'notes'
+                ? 'border-accent bg-accent text-ink'
+                : 'border-line/80 bg-elevated/70 text-muted hover:border-line hover:bg-panel hover:text-ink'
+            }`}
+          >
+            Notes {activeNotesCount > 0 ? `(${activeNotesCount})` : ''}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveSection('trash')}
+            className={`rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-accent ${
+              activeSection === 'trash'
+                ? 'border-accent bg-accent text-ink'
+                : 'border-line/80 bg-elevated/70 text-muted hover:border-line hover:bg-panel hover:text-ink'
+            }`}
+          >
+            Trash {trashedNotesCount > 0 ? `(${trashedNotesCount})` : ''}
+          </button>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between px-5 py-3 md:px-6">
         <p className="text-xs uppercase tracking-[0.18em] text-muted">
-          {totalNotes === 1 ? '1 note' : `${totalNotes} notes`}
+          {activeSection === 'trash'
+            ? currentSectionCount === 1
+              ? '1 trashed note'
+              : `${currentSectionCount} trashed notes`
+            : currentSectionCount === 1
+              ? '1 note'
+              : `${currentSectionCount} notes`}
         </p>
         <div className="h-px w-14 bg-line/80" />
       </div>
 
-      <NoteList notes={notes} totalNotes={totalNotes} onSelect={onNoteSelect} />
+      <NoteList notes={notes} totalNotes={currentSectionCount} onSelect={onNoteSelect} section={activeSection} />
     </>
   );
 
@@ -92,7 +175,9 @@ function Sidebar({
         >
           <div className="flex items-center justify-between border-b border-line/80 px-5 py-4">
             <div>
-              <p className="font-serif text-xl tracking-calm text-ink">Your notes</p>
+              <p className="font-serif text-xl tracking-calm text-ink">
+                {activeSection === 'trash' ? 'Trash' : 'Your notes'}
+              </p>
               <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">Mobile library</p>
             </div>
             <button
@@ -101,7 +186,7 @@ function Sidebar({
               className="hairline inline-flex h-10 w-10 items-center justify-center rounded-full bg-elevated/90 text-muted transition hover:bg-elevated hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent"
             >
               <span aria-hidden="true" className="text-lg leading-none">
-                ×
+                x
               </span>
             </button>
           </div>
@@ -113,7 +198,7 @@ function Sidebar({
       <aside
         className={`hidden w-full shrink-0 flex-col border-b border-line/80 bg-panel/95 transition-[width,opacity,border-color] duration-300 md:flex md:min-h-full md:border-b-0 md:overflow-hidden ${
           isCollapsed
-            ? 'md:w-0 md:border-r-0 md:opacity-0 md:pointer-events-none'
+            ? 'md:w-0 md:border-r-0 md:pointer-events-none md:opacity-0'
             : 'md:w-[356px] md:border-r md:opacity-100'
         }`}
       >

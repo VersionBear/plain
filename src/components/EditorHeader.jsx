@@ -32,8 +32,19 @@ function TrashIcon() {
   );
 }
 
-function EditorHeader({ note, isSidebarCollapsed, onToggleSidebar }) {
-  const deleteNote = useNotesStore((state) => state.deleteNote);
+function RestoreIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 1 0 3-6.7" />
+      <path d="M3 4v5h5" />
+    </svg>
+  );
+}
+
+function EditorHeader({ note, isSidebarCollapsed, onToggleSidebar, activeSection }) {
+  const trashNote = useNotesStore((state) => state.trashNote);
+  const restoreNote = useNotesStore((state) => state.restoreNote);
+  const deleteNotePermanently = useNotesStore((state) => state.deleteNotePermanently);
   const togglePinned = useNotesStore((state) => state.togglePinned);
   const meta = formatEditorMeta(note.createdAt, note.updatedAt);
 
@@ -65,34 +76,59 @@ function EditorHeader({ note, isSidebarCollapsed, onToggleSidebar }) {
 
           <div className="min-w-0 text-[10px] text-muted md:flex md:flex-wrap md:items-center md:gap-x-2.5 md:gap-y-1 md:text-xs">
             <span className="hidden md:inline">Created {meta.created}</span>
-            <span className="hidden text-line md:inline">•</span>
+            <span className="hidden text-line md:inline">/</span>
             <span className="block truncate">Updated {meta.updated}</span>
           </div>
         </div>
 
         <div className="inline-flex shrink-0 items-center gap-1.5">
-          <button
-            type="button"
-            title={note.pinned ? 'Unpin note' : 'Pin note'}
-            aria-label={note.pinned ? 'Unpin note' : 'Pin note'}
-            onClick={() => togglePinned(note.id)}
-            className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10 ${
-              note.pinned
-                ? 'border-accent bg-accent/85 text-ink'
-                : 'border-line/70 bg-transparent text-muted hover:border-line hover:bg-panel/75 hover:text-ink'
-            }`}
-          >
-            <PinIcon />
-          </button>
-          <button
-            type="button"
-            title="Delete note"
-            aria-label="Delete note"
-            onClick={() => deleteNote(note.id)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line/70 bg-transparent text-muted transition hover:border-line hover:bg-panel/75 hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10"
-          >
-            <TrashIcon />
-          </button>
+          {activeSection === 'notes' ? (
+            <>
+              <button
+                type="button"
+                title={note.pinned ? 'Unpin note' : 'Pin note'}
+                aria-label={note.pinned ? 'Unpin note' : 'Pin note'}
+                onClick={() => togglePinned(note.id)}
+                className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10 ${
+                  note.pinned
+                    ? 'border-accent bg-accent/85 text-ink'
+                    : 'border-line/70 bg-transparent text-muted hover:border-line hover:bg-panel/75 hover:text-ink'
+                }`}
+              >
+                <PinIcon />
+              </button>
+              <button
+                type="button"
+                title="Move note to Trash"
+                aria-label="Move note to Trash"
+                onClick={() => trashNote(note.id)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line/70 bg-transparent text-muted transition hover:border-line hover:bg-panel/75 hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10"
+              >
+                <TrashIcon />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                title="Restore note"
+                aria-label="Restore note"
+                onClick={() => restoreNote(note.id)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-accent bg-accent/85 text-ink transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10"
+              >
+                <RestoreIcon />
+              </button>
+              <button
+                type="button"
+                title="Delete permanently"
+                aria-label="Delete permanently"
+                onClick={() => deleteNotePermanently(note.id)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line/70 bg-transparent text-muted transition hover:border-line hover:bg-panel/75 hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10"
+              >
+                <TrashIcon />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>

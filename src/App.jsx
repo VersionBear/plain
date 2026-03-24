@@ -4,31 +4,32 @@ import EditorPane from './components/EditorPane';
 import Sidebar from './components/Sidebar';
 import { useTheme } from './hooks/useTheme';
 import { useNotesStore } from './store/useNotesStore';
-import { filterNotes, getNextSelectedNoteId, sortNotes } from './utils/notes';
+import { filterNotes, sortNotes, sortTrashedNotes } from './utils/notes';
 
 function App() {
   const appVersion = packageJson.version;
   const { theme, toggleTheme } = useTheme();
   const notes = useNotesStore((state) => state.notes);
+  const trashedNotes = useNotesStore((state) => state.trashedNotes);
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
-  const selectNote = useNotesStore((state) => state.selectNote);
   const createNote = useNotesStore((state) => state.createNote);
   const searchQuery = useNotesStore((state) => state.searchQuery);
+  const activeSection = useNotesStore((state) => state.activeSection);
+  const hydrateLibrary = useNotesStore((state) => state.hydrateLibrary);
+  const isHydrated = useNotesStore((state) => state.isHydrated);
+  const storageStatus = useNotesStore((state) => state.storageStatus);
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false);
 
-  const visibleNotes = useMemo(() => {
-    return filterNotes(sortNotes(notes), deferredSearchQuery);
-  }, [notes, deferredSearchQuery]);
-
   useEffect(() => {
-    if (!notes.length || selectedNoteId) {
-      return;
-    }
+    void hydrateLibrary();
+  }, [hydrateLibrary]);
 
-    selectNote(getNextSelectedNoteId(notes));
-  }, [notes, selectedNoteId, selectNote]);
+  const visibleNotes = useMemo(() => {
+    const currentNotes = activeSection === 'trash' ? sortTrashedNotes(trashedNotes) : sortNotes(notes);
+    return filterNotes(currentNotes, deferredSearchQuery);
+  }, [activeSection, deferredSearchQuery, notes, trashedNotes]);
 
   useEffect(() => {
     if (selectedNoteId) {
@@ -90,7 +91,8 @@ function App() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row md:rounded-[28px] md:border md:border-line/80 md:bg-panel/60 md:shadow-[0_10px_30px_rgba(28,25,23,0.04)]">
           <Sidebar
             notes={visibleNotes}
-            totalNotes={notes.length}
+            activeNotesCount={notes.length}
+            trashedNotesCount={trashedNotes.length}
             theme={theme}
             toggleTheme={toggleTheme}
             onCreateNote={handleCreateNote}
@@ -98,12 +100,16 @@ function App() {
             isMobileOpen={isMobileSidebarOpen}
             onCloseMobile={() => setIsMobileSidebarOpen(false)}
             isCollapsed={isDesktopSidebarCollapsed}
+            activeSection={activeSection}
+            storageStatus={storageStatus}
+            isHydrated={isHydrated}
           />
           <EditorPane
-            totalNotes={notes.length}
+            totalNotes={activeSection === 'trash' ? trashedNotes.length : notes.length}
             searchQuery={searchQuery}
             isSidebarCollapsed={isDesktopSidebarCollapsed}
             onToggleSidebar={() => setIsDesktopSidebarCollapsed((current) => !current)}
+            activeSection={activeSection}
           />
         </div>
 

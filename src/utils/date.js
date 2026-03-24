@@ -41,3 +41,12 @@ export function formatEditorMeta(createdAt, updatedAt) {
     updated,
   };
 }
+
+export function formatTrashTimestamp(timestamp) {
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(timestamp));
+}

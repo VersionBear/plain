@@ -29,6 +29,15 @@ export function sortNotes(notes) {
   });
 }
 
+export function sortTrashedNotes(notes) {
+  return [...notes].sort((left, right) => {
+    const leftTimestamp = typeof left.trashedAt === 'number' ? left.trashedAt : left.updatedAt;
+    const rightTimestamp = typeof right.trashedAt === 'number' ? right.trashedAt : right.updatedAt;
+
+    return rightTimestamp - leftTimestamp;
+  });
+}
+
 export function filterNotes(notes, query) {
   const normalizedQuery = query.trim().toLowerCase();
 
@@ -72,10 +81,12 @@ export function makeEmptyNote() {
     pinned: false,
     createdAt: now,
     updatedAt: now,
+    trashedAt: null,
   };
 }
 
-export function getNextSelectedNoteId(notes, query = '') {
-  const filtered = filterNotes(sortNotes(notes), query);
-  return filtered[0]?.id ?? sortNotes(notes)[0]?.id ?? null;
+export function getNextSelectedNoteId(notes, query = '', sortFn = sortNotes) {
+  const sortedNotes = sortFn(notes);
+  const filtered = filterNotes(sortedNotes, query);
+  return filtered[0]?.id ?? sortedNotes[0]?.id ?? null;
 }

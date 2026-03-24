@@ -1,8 +1,8 @@
 import { useNotesStore } from '../store/useNotesStore';
-import { formatNoteTimestamp } from '../utils/date';
+import { formatNoteTimestamp, formatTrashTimestamp } from '../utils/date';
 import { getNotePreview, getNoteTitle } from '../utils/notes';
 
-function NoteListItem({ note, onSelect }) {
+function NoteListItem({ note, onSelect, section }) {
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
   const selectNote = useNotesStore((state) => state.selectNote);
   const isSelected = selectedNoteId === note.id;
@@ -31,7 +31,7 @@ function NoteListItem({ note, onSelect }) {
       <div className="flex items-start justify-between gap-4">
         <p className="line-clamp-1 pr-2 text-sm font-medium text-ink">{getNoteTitle(note)}</p>
         <div className="flex shrink-0 items-center gap-2 self-start text-xs text-muted">
-          {note.pinned ? (
+          {section === 'notes' && note.pinned ? (
             <span
               aria-label="Pinned note"
               title="Pinned note"
@@ -53,10 +53,13 @@ function NoteListItem({ note, onSelect }) {
               </svg>
             </span>
           ) : null}
-          <p>{formatNoteTimestamp(note.updatedAt)}</p>
+          <p>{section === 'trash' ? formatTrashTimestamp(note.trashedAt ?? note.updatedAt) : formatNoteTimestamp(note.updatedAt)}</p>
         </div>
       </div>
       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{getNotePreview(note)}</p>
+      {section === 'trash' ? (
+        <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-muted">In Trash</p>
+      ) : null}
     </button>
   );
 }

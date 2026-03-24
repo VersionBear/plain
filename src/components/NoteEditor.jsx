@@ -826,7 +826,7 @@ function ToolbarIcon({ name }) {
   return null;
 }
 
-function NoteEditor({ note }) {
+function NoteEditor({ note, isReadOnly = false }) {
   const updateNote = useNotesStore((state) => state.updateNote);
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -851,6 +851,12 @@ function NoteEditor({ note }) {
   };
 
   const flushPendingContent = (touchUpdatedAt = true) => {
+    if (isReadOnly) {
+      pendingContentRef.current = null;
+      clearPendingSave();
+      return;
+    }
+
     const pendingContent = pendingContentRef.current;
 
     clearPendingSave();
@@ -1014,6 +1020,10 @@ function NoteEditor({ note }) {
   }, [isLinkPanelOpen]);
 
   const commitEditorState = () => {
+    if (isReadOnly) {
+      return;
+    }
+
     const editor = editorRef.current;
 
     if (!editor) {
@@ -1044,6 +1054,10 @@ function NoteEditor({ note }) {
   };
 
   const runCommand = (command, value = null) => {
+    if (isReadOnly) {
+      return;
+    }
+
     const editor = editorRef.current;
 
     if (!editor) {
@@ -1059,6 +1073,10 @@ function NoteEditor({ note }) {
   };
 
   const insertHtml = (html) => {
+    if (isReadOnly) {
+      return;
+    }
+
     const editor = editorRef.current;
 
     if (!editor) {
@@ -1074,6 +1092,10 @@ function NoteEditor({ note }) {
   };
 
   const openLinkPanel = () => {
+    if (isReadOnly) {
+      return;
+    }
+
     const editor = editorRef.current;
 
     if (!editor) {
@@ -1107,6 +1129,10 @@ function NoteEditor({ note }) {
   };
 
   const handleLinkApply = () => {
+    if (isReadOnly) {
+      return;
+    }
+
     const editor = editorRef.current;
 
     if (!editor) {
@@ -1146,6 +1172,10 @@ function NoteEditor({ note }) {
   };
 
   const handleLinkRemove = () => {
+    if (isReadOnly) {
+      return;
+    }
+
     const editor = editorRef.current;
 
     if (!editor) {
@@ -1197,6 +1227,10 @@ function NoteEditor({ note }) {
   };
 
   const handleImageFiles = async (fileList) => {
+    if (isReadOnly) {
+      return;
+    }
+
     const files = Array.from(fileList ?? []).filter((file) => file.type.startsWith('image/'));
 
     if (!files.length) {
@@ -1210,11 +1244,19 @@ function NoteEditor({ note }) {
   };
 
   const handleImageInsert = () => {
+    if (isReadOnly) {
+      return;
+    }
+
     saveSelection();
     fileInputRef.current?.click();
   };
 
   const handleToolbarAction = (action) => {
+    if (isReadOnly) {
+      return;
+    }
+
     if (action.type === 'command') {
       runCommand(action.command, action.value);
       return;
@@ -1246,6 +1288,11 @@ function NoteEditor({ note }) {
   };
 
   const handleFileInputChange = async (event) => {
+    if (isReadOnly) {
+      event.target.value = '';
+      return;
+    }
+
     try {
       await handleImageFiles(event.target.files);
     } finally {
@@ -1333,6 +1380,10 @@ function NoteEditor({ note }) {
   };
 
   const handleImageResize = (width) => {
+    if (isReadOnly) {
+      return;
+    }
+
     const editor = editorRef.current;
     const figure = selectedImageRef.current;
 
@@ -1347,6 +1398,10 @@ function NoteEditor({ note }) {
   };
 
   const applyTableMutation = (mutate) => {
+    if (isReadOnly) {
+      return;
+    }
+
     const editor = editorRef.current;
     const table = refreshSelectedTable();
 
@@ -1399,6 +1454,10 @@ function NoteEditor({ note }) {
   };
 
   const handleTableKeyDown = (event) => {
+    if (isReadOnly) {
+      return;
+    }
+
     if (event.key !== 'Tab') {
       return;
     }
@@ -1460,33 +1519,42 @@ function NoteEditor({ note }) {
         <input
           type="text"
           value={note.title}
+          readOnly={isReadOnly}
           onChange={(event) => updateNote(note.id, { title: event.target.value })}
-          placeholder="Untitled"
-          className="w-full border-0 bg-transparent p-0 font-serif text-[2rem] font-medium tracking-calm text-ink placeholder:text-muted/75 focus:outline-none focus:ring-0 md:text-[3.1rem]"
+          placeholder={isReadOnly ? 'Untitled note' : 'Untitled'}
+          className={`w-full border-0 bg-transparent p-0 font-serif text-[2rem] font-medium tracking-calm text-ink placeholder:text-muted/75 focus:outline-none focus:ring-0 md:text-[3.1rem] ${
+            isReadOnly ? 'cursor-default' : ''
+          }`}
         />
 
-        <div className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-3 md:mt-5 md:border-b md:border-line/70 md:pb-4">
-          {toolbarActions.map((action) => (
-            <button
-              key={action.id}
-              type="button"
-              title={action.title}
-              aria-label={action.title}
-              aria-pressed={isActionActive(action)}
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => handleToolbarAction(action)}
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10 ${
-                isActionActive(action)
-                  ? 'border-accent bg-accent text-ink shadow-sm'
-                  : 'border-line/70 bg-elevated/72 text-muted hover:border-line hover:bg-panel hover:text-ink'
-              }`}
-            >
-              <ToolbarIcon name={action.icon} />
-            </button>
-          ))}
-        </div>
+        {isReadOnly ? (
+          <div className="mt-4 rounded-[22px] border border-line/70 bg-panel/72 px-4 py-3 text-sm leading-6 text-muted md:mt-5">
+            This note is in Trash. Restore it to edit again, or delete it permanently.
+          </div>
+        ) : (
+          <div className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-3 md:mt-5 md:border-b md:border-line/70 md:pb-4">
+            {toolbarActions.map((action) => (
+              <button
+                key={action.id}
+                type="button"
+                title={action.title}
+                aria-label={action.title}
+                aria-pressed={isActionActive(action)}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => handleToolbarAction(action)}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-accent md:h-10 md:w-10 ${
+                  isActionActive(action)
+                    ? 'border-accent bg-accent text-ink shadow-sm'
+                    : 'border-line/70 bg-elevated/72 text-muted hover:border-line hover:bg-panel hover:text-ink'
+                }`}
+              >
+                <ToolbarIcon name={action.icon} />
+              </button>
+            ))}
+          </div>
+        )}
 
-        {isLinkPanelOpen ? (
+        {!isReadOnly && isLinkPanelOpen ? (
           <form
             className="mt-3 flex flex-col gap-2 rounded-[22px] border border-line/70 bg-panel/72 p-3 md:mt-4 md:flex-row md:items-center"
             onSubmit={(event) => {
@@ -1537,7 +1605,7 @@ function NoteEditor({ note }) {
           </form>
         ) : null}
 
-        {selectedImageWidth ? (
+        {!isReadOnly && selectedImageWidth ? (
           <div className="mt-3 flex items-center gap-2 overflow-x-auto rounded-[22px] border border-line/70 bg-panel/72 px-3 py-2 md:mt-4">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line/70 bg-elevated/70 text-muted">
               <ToolbarIcon name="image" />
@@ -1563,7 +1631,7 @@ function NoteEditor({ note }) {
           </div>
         ) : null}
 
-        {selectedTableState ? (
+        {!isReadOnly && selectedTableState ? (
           <>
             <div className="mt-3 rounded-[24px] border border-line/70 bg-panel/78 px-3 py-3 shadow-[0_12px_34px_rgba(30,26,22,0.06)] md:hidden">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1745,17 +1813,23 @@ function NoteEditor({ note }) {
 
         <div className="mt-2 flex min-h-[min(58dvh,28rem)] min-h-0 flex-1 flex-col overflow-hidden rounded-[24px] border border-line/70 bg-elevated/72 shadow-panel md:mt-5 md:min-h-[360px] md:rounded-[28px] md:border-line/75 md:bg-elevated/80 md:h-[clamp(32rem,64dvh,46rem)] md:min-h-0 md:flex-none">
           <div className="flex items-center justify-between border-b border-line/70 px-4 py-2 text-[10px] uppercase tracking-[0.18em] text-muted md:px-4 md:py-3 md:text-xs">
-            <span className="hidden md:inline">Rich text editor</span>
-            <span className="md:hidden">Writing space</span>
-            <span>{getPlainTextFromContent(note.content).trim() ? 'Formatting saves live' : 'Start writing'}</span>
+            <span className="hidden md:inline">{isReadOnly ? 'Trashed note' : 'Rich text editor'}</span>
+            <span className="md:hidden">{isReadOnly ? 'Trash preview' : 'Writing space'}</span>
+            <span>
+              {isReadOnly
+                ? 'Restore to continue editing'
+                : getPlainTextFromContent(note.content).trim()
+                  ? 'Formatting saves live'
+                  : 'Start writing'}
+            </span>
           </div>
 
           <div
             ref={editorRef}
-            contentEditable
+            contentEditable={!isReadOnly}
             suppressContentEditableWarning
-            data-placeholder="Start writing."
-            onInput={commitEditorState}
+            data-placeholder={isReadOnly ? '' : 'Start writing.'}
+            onInput={isReadOnly ? undefined : commitEditorState}
             onBlur={() => {
               commitEditorState();
               saveSelection();
@@ -1814,6 +1888,10 @@ function NoteEditor({ note }) {
               syncToolbarState();
             }}
             onPaste={async (event) => {
+              if (isReadOnly) {
+                return;
+              }
+
               const imageItems = Array.from(event.clipboardData.items).filter((item) =>
                 item.type.startsWith('image/'),
               );
@@ -1830,7 +1908,9 @@ function NoteEditor({ note }) {
               document.execCommand('insertText', false, text);
               commitEditorState();
             }}
-            className="editor-surface min-h-0 flex-1 overflow-y-auto overscroll-contain border-0 bg-transparent px-4 py-4 text-[15px] leading-8 text-ink focus:outline-none md:text-base"
+            className={`editor-surface min-h-0 flex-1 overflow-y-auto overscroll-contain border-0 bg-transparent px-4 py-4 text-[15px] leading-8 text-ink focus:outline-none md:text-base ${
+              isReadOnly ? 'cursor-default' : ''
+            }`}
           />
         </div>
       </div>

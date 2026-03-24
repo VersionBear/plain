@@ -4,12 +4,14 @@ import EmptyEditorState from './EmptyEditorState';
 import EditorHeader from './EditorHeader';
 import NoteEditor from './NoteEditor';
 
-function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSidebar }) {
+function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSidebar, activeSection }) {
   const notes = useNotesStore((state) => state.notes);
+  const trashedNotes = useNotesStore((state) => state.trashedNotes);
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
+  const currentNotes = activeSection === 'trash' ? trashedNotes : notes;
   const note = useMemo(
-    () => notes.find((entry) => entry.id === selectedNoteId) ?? null,
-    [notes, selectedNoteId],
+    () => currentNotes.find((entry) => entry.id === selectedNoteId) ?? null,
+    [currentNotes, selectedNoteId],
   );
 
   if (!note) {
@@ -19,6 +21,7 @@ function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSideb
         searchQuery={searchQuery}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={onToggleSidebar}
+        activeSection={activeSection}
       />
     );
   }
@@ -29,8 +32,9 @@ function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSideb
         note={note}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={onToggleSidebar}
+        activeSection={activeSection}
       />
-      <NoteEditor note={note} />
+      <NoteEditor note={note} isReadOnly={activeSection === 'trash'} />
     </main>
   );
 }
