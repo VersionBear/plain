@@ -1,67 +1,58 @@
 import { useNotesStore } from '../store/useNotesStore';
+import { FileText, Plus, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 function EmptyEditorState({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSidebar, activeSection }) {
   const createNote = useNotesStore((state) => state.createNote);
 
   return (
-    <main className="flex flex-1 items-center justify-center bg-canvas px-6 py-12">
-      <div className="max-w-xl text-center">
-        <div className="mb-6 flex justify-center">
-          <button
-            type="button"
-            onClick={onToggleSidebar}
-            title={isSidebarCollapsed ? 'Show notes sidebar' : 'Hide notes sidebar'}
-            aria-label={isSidebarCollapsed ? 'Show notes sidebar' : 'Hide notes sidebar'}
-            className="hidden h-10 w-10 items-center justify-center rounded-full border border-line/80 bg-elevated/85 text-muted transition hover:border-line hover:bg-panel hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent md:inline-flex"
-          >
-            {isSidebarCollapsed ? (
-              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6.5 4.5h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7" />
-                <path d="M4.5 4.5v11" />
-                <path d="m10.75 7.25-3 2.75 3 2.75" />
-              </svg>
-            ) : (
-              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6.5 4.5h7a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-7" />
-                <path d="M4.5 4.5v11" />
-                <path d="m9.25 7.25 3 2.75-3 2.75" />
-              </svg>
-            )}
-          </button>
+    <main className="flex-1 flex flex-col items-center justify-center bg-canvas p-6 relative">
+      <div className="absolute top-6 left-6 hidden md:block">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          className="p-2 text-muted hover:text-ink hover:bg-line/50 rounded-lg transition-colors"
+        >
+          {isSidebarCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+        </button>
+      </div>
+
+      <div className="max-w-md w-full text-center flex flex-col items-center animate-fade-in">
+        <div className="w-16 h-16 bg-line/30 rounded-2xl flex items-center justify-center mb-6">
+          <FileText size={32} className="text-muted" />
         </div>
 
-        <p className="font-serif text-4xl tracking-calm text-ink md:text-5xl">
+        <h2 className="text-2xl font-semibold text-ink mb-3 tracking-tight">
           {activeSection === 'trash'
-            ? 'Nothing lost. Nothing rushed.'
+            ? 'Nothing selected'
             : totalNotes === 0
-              ? 'Open. Write. Done.'
-              : 'A smaller place for your thoughts.'}
-        </p>
-        <p className="mx-auto mt-4 max-w-lg text-base leading-7 text-muted">
+              ? 'Welcome to Plain'
+              : 'Select a note to view'}
+        </h2>
+        
+        <p className="text-sm text-muted leading-relaxed mb-8">
           {activeSection === 'trash'
             ? searchQuery
-              ? 'Your search is hiding the current trashed note. Clear the search or pick another note from Trash.'
+              ? 'Clear search to view trashed notes.'
               : totalNotes === 0
-                ? 'Deleted notes land here first, so there is always a recovery step before anything disappears for good.'
-                : 'Select a trashed note to restore it or remove it permanently.'
+                ? 'Your trash is empty.'
+                : 'Select a trashed note to restore or permanently delete.'
             : totalNotes === 0
-              ? 'Plain is intentionally limited. No accounts. No sync. No feature clutter. Just a calm, local-first space to write and return.'
+              ? 'A beautiful, local-first space for your thoughts. Start writing without distractions.'
               : searchQuery
-                ? 'Your search is hiding the currently selected note. Clear the search or create something new.'
-                : 'Select a note from the left or create a fresh one. Plain stays out of the way on purpose.'}
+                ? 'No notes match your current search.'
+                : 'Choose a note from the sidebar or create a new one to start writing.'}
         </p>
 
-        {activeSection === 'notes' ? (
-          <div className="mt-8 flex justify-center">
-            <button
-              type="button"
-              onClick={createNote}
-              className="hairline rounded-full bg-elevated/90 px-5 py-3 text-sm font-medium text-ink transition hover:bg-elevated focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              Create a note
-            </button>
-          </div>
-        ) : null}
+        {activeSection === 'notes' && (
+          <button
+            type="button"
+            onClick={createNote}
+            className="flex items-center gap-2 px-5 py-2.5 bg-ink text-canvas rounded-full font-medium text-sm hover:opacity-90 transition-opacity shadow-sm"
+          >
+            <Plus size={18} />
+            Create new note
+          </button>
+        )}
       </div>
     </main>
   );

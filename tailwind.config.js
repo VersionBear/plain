@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import typography from '@tailwindcss/typography';
+
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,jsx}'],
@@ -17,16 +19,85 @@ export default {
       },
       boxShadow: {
         panel: '0 1px 2px rgba(28, 25, 23, 0.04)',
-        selected: '0 0 0 1px rgba(111, 102, 91, 0.08), 0 10px 30px rgba(28, 25, 23, 0.06)',
+        selected: '0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02)',
+        floating: '0 10px 40px -10px rgba(0,0,0,0.1), 0 4px 10px -5px rgba(0,0,0,0.04)',
       },
       fontFamily: {
-        sans: ['Aptos', '"Segoe UI"', '"SF Pro Text"', 'system-ui', 'sans-serif'],
-        serif: ['"Iowan Old Style"', '"Palatino Linotype"', '"Book Antiqua"', 'Georgia', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['ui-serif', 'Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
+        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       letterSpacing: {
-        calm: '-0.02em',
+        calm: '-0.015em',
+        tightest: '-0.025em',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: '100%',
+            color: 'rgb(var(--color-ink))',
+            a: {
+              color: 'rgb(var(--color-accent))',
+              '&:hover': {
+                opacity: 0.8,
+              },
+            },
+            'h1, h2, h3, h4': {
+              color: 'rgb(var(--color-ink))',
+              fontWeight: '600',
+              letterSpacing: '-0.025em',
+            },
+            strong: {
+              color: 'rgb(var(--color-ink))',
+            },
+            blockquote: {
+              borderLeftColor: 'rgb(var(--color-accent))',
+              color: 'rgb(var(--color-muted))',
+            },
+            hr: {
+              borderColor: 'rgb(var(--color-line))',
+            },
+            'ul > li::marker': {
+              color: 'rgb(var(--color-muted))',
+            },
+            'ol > li::marker': {
+              color: 'rgb(var(--color-muted))',
+            },
+            pre: {
+              backgroundColor: 'rgb(var(--color-panel))',
+              color: 'rgb(var(--color-ink))',
+            },
+            code: {
+              color: 'rgb(var(--color-ink))',
+              backgroundColor: 'rgb(var(--color-panel))',
+              padding: '0.2em 0.4em',
+              borderRadius: '0.25rem',
+              fontWeight: '400',
+            },
+            'code::before': {
+              content: '""',
+            },
+            'code::after': {
+              content: '""',
+            },
+          },
+        },
       },
     },
   },
-  plugins: [],
+  plugins: [typography],
 };

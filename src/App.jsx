@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import { useTheme } from './hooks/useTheme';
 import { useNotesStore } from './store/useNotesStore';
 import { filterNotes, sortNotes, sortTrashedNotes } from './utils/notes';
+import { Menu, Plus } from 'lucide-react';
 
 function App() {
   const appVersion = packageJson.version;
@@ -43,91 +44,45 @@ function App() {
   };
 
   return (
-    <div className="min-h-dvh bg-canvas text-ink">
-      <div className="mx-auto flex min-h-dvh max-w-[1560px] flex-col md:px-4 md:py-4">
-        <div className="sticky top-0 z-20 border-b border-line/70 bg-canvas/88 px-4 py-2.5 backdrop-blur md:hidden">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-serif text-[1.5rem] tracking-calm text-ink">Plain</p>
-              <p className="mt-0.5 text-[10px] uppercase tracking-[0.22em] text-muted">v{appVersion} local writing space</p>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                className="hairline rounded-full bg-elevated/88 px-3 py-2 text-sm text-ink transition hover:bg-elevated focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                Notes
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateNote}
-                className="hairline rounded-full bg-panel px-3 py-2 text-sm text-ink transition hover:bg-elevated focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                New
-              </button>
-              <button
-                type="button"
-                onClick={toggleTheme}
-                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                className="hairline inline-flex h-9 w-9 items-center justify-center rounded-full bg-elevated/88 text-muted transition hover:bg-elevated hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent"
-              >
-                {theme === 'dark' ? (
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
-                    <circle cx="10" cy="10" r="3.5" />
-                    <path d="M10 2.5v2.2M10 15.3v2.2M17.5 10h-2.2M4.7 10H2.5M15.3 4.7l-1.5 1.5M6.2 13.8l-1.5 1.5M15.3 15.3l-1.5-1.5M6.2 6.2L4.7 4.7" strokeLinecap="round" />
-                  </svg>
-                ) : (
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
-                    <path d="M11.7 2.7a.7.7 0 0 0-.8.8 6.2 6.2 0 0 1-7.4 7.4.7.7 0 0 0-.8.8A7.8 7.8 0 1 0 11.7 2.7Z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
+    <div className="h-dvh w-full flex overflow-hidden bg-canvas text-ink font-sans selection:bg-accent/20">
+      {/* Mobile Top Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-20 border-b border-line bg-canvas/80 backdrop-blur-md px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsMobileSidebarOpen(true)} className="p-1 -ml-1 text-muted hover:text-ink transition-colors">
+            <Menu size={20} />
+          </button>
+          <span className="font-medium tracking-tight">Plain</span>
         </div>
+        <button onClick={handleCreateNote} className="p-1 -mr-1 text-muted hover:text-ink transition-colors">
+          <Plus size={20} />
+        </button>
+      </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row md:rounded-[28px] md:border md:border-line/80 md:bg-panel/60 md:shadow-[0_10px_30px_rgba(28,25,23,0.04)]">
-          <Sidebar
-            notes={visibleNotes}
-            activeNotesCount={notes.length}
-            trashedNotesCount={trashedNotes.length}
-            theme={theme}
-            toggleTheme={toggleTheme}
-            onCreateNote={handleCreateNote}
-            onNoteSelect={() => setIsMobileSidebarOpen(false)}
-            isMobileOpen={isMobileSidebarOpen}
-            onCloseMobile={() => setIsMobileSidebarOpen(false)}
-            isCollapsed={isDesktopSidebarCollapsed}
-            activeSection={activeSection}
-            storageStatus={storageStatus}
-            isHydrated={isHydrated}
-          />
-          <EditorPane
-            totalNotes={activeSection === 'trash' ? trashedNotes.length : notes.length}
-            searchQuery={searchQuery}
-            isSidebarCollapsed={isDesktopSidebarCollapsed}
-            onToggleSidebar={() => setIsDesktopSidebarCollapsed((current) => !current)}
-            activeSection={activeSection}
-          />
-        </div>
-
-        <footer className="px-4 pb-6 pt-4 text-center md:px-0 md:pb-2">
-          <div className="flex flex-col items-center justify-center gap-1.5 text-sm text-muted md:flex-row md:gap-3">
-            <span className="rounded-full border border-line/70 bg-elevated/55 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-muted">
-              v{appVersion}
-            </span>
-            <a
-              href="https://versionbear.com"
-              target="_blank"
-              rel="noreferrer"
-              className="transition hover:text-ink"
-            >
-              Made by VersionBear, versionbear.com
-            </a>
-          </div>
-        </footer>
+      {/* Main Layout */}
+      <div className="flex w-full h-full pt-[53px] md:pt-0">
+        <Sidebar
+          notes={visibleNotes}
+          activeNotesCount={notes.length}
+          trashedNotesCount={trashedNotes.length}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          onCreateNote={handleCreateNote}
+          onNoteSelect={() => setIsMobileSidebarOpen(false)}
+          isMobileOpen={isMobileSidebarOpen}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+          isCollapsed={isDesktopSidebarCollapsed}
+          activeSection={activeSection}
+          storageStatus={storageStatus}
+          isHydrated={isHydrated}
+          appVersion={appVersion}
+        />
+        <EditorPane
+          totalNotes={activeSection === 'trash' ? trashedNotes.length : notes.length}
+          searchQuery={searchQuery}
+          isSidebarCollapsed={isDesktopSidebarCollapsed}
+          onToggleSidebar={() => setIsDesktopSidebarCollapsed((current) => !current)}
+          activeSection={activeSection}
+        />
       </div>
     </div>
   );

@@ -1,54 +1,55 @@
 import NoteListItem from './NoteListItem';
 import { useNotesStore } from '../store/useNotesStore';
+import { ArchiveRestore, FileText, SearchX } from 'lucide-react';
 
 function NoteList({ notes, totalNotes, onSelect, section }) {
   const searchQuery = useNotesStore((state) => state.searchQuery);
 
   if (totalNotes === 0) {
     return (
-      <div className="flex flex-1 items-end px-5 pb-8 pt-2 md:px-6">
-        <div className="max-w-sm">
-          {section === 'trash' ? (
-            <>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted">Trash is empty</p>
-              <p className="mt-3 max-w-[18rem] text-sm leading-6 text-muted">
-                Notes you move out of the way will stay here until you restore them or delete them permanently.
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-xs uppercase tracking-[0.18em] text-muted">Local-first by design</p>
-              <p className="mt-3 max-w-[18rem] text-sm leading-6 text-muted">
-                A quiet place to keep notes close, without turning writing into a system.
-              </p>
-            </>
-          )}
-        </div>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-muted">
+        {section === 'trash' ? (
+          <>
+            <div className="bg-line/30 p-3 rounded-full mb-3">
+              <ArchiveRestore size={24} className="opacity-70" />
+            </div>
+            <p className="text-sm font-medium text-ink">Trash is empty</p>
+            <p className="text-xs mt-1 max-w-[200px] leading-relaxed">
+              Notes you delete will stay here until you restore or permanently delete them.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="bg-line/30 p-3 rounded-full mb-3">
+              <FileText size={24} className="opacity-70" />
+            </div>
+            <p className="text-sm font-medium text-ink">Local-first notes</p>
+            <p className="text-xs mt-1 max-w-[200px] leading-relaxed">
+              A quiet place to keep notes close, without turning writing into a system.
+            </p>
+          </>
+        )}
       </div>
     );
   }
 
   if (notes.length === 0) {
     return (
-      <div className="flex flex-1 items-center px-5 pb-8 pt-4 md:px-6">
-        <div className="max-w-sm">
-          <p className="font-serif text-2xl tracking-calm text-ink">Nothing matched that search.</p>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            {section === 'trash'
-              ? 'Try a simpler word or clear the search to return to your trashed notes.'
-              : 'Try a simpler word or clear the search to return to your full list of notes.'}
-          </p>
-          {searchQuery ? (
-            <p className="mt-4 text-xs uppercase tracking-[0.18em] text-muted">Search is live</p>
-          ) : null}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-muted">
+        <div className="bg-line/30 p-3 rounded-full mb-3">
+          <SearchX size={24} className="opacity-70" />
         </div>
+        <p className="text-sm font-medium text-ink">No results found</p>
+        <p className="text-xs mt-1 max-w-[200px] leading-relaxed">
+          Try a different keyword or clear your search.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[280px] flex-1 overflow-y-auto px-3 pb-4 md:px-4">
-      <ul className="space-y-1.5">
+    <div className="flex-1 overflow-y-auto px-3 py-3 scroll-smooth">
+      <ul className="flex flex-col gap-1">
         {notes.map((note) => (
           <li key={note.id}>
             <NoteListItem note={note} onSelect={onSelect} section={section} />

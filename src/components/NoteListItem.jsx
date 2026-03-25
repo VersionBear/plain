@@ -1,6 +1,8 @@
 import { useNotesStore } from '../store/useNotesStore';
 import { formatNoteTimestamp, formatTrashTimestamp } from '../utils/date';
 import { getNotePreview, getNoteTitle } from '../utils/notes';
+import { Pin } from 'lucide-react';
+import clsx from 'clsx';
 
 function NoteListItem({ note, onSelect, section }) {
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
@@ -14,52 +16,32 @@ function NoteListItem({ note, onSelect, section }) {
         selectNote(note.id);
         onSelect?.(note.id);
       }}
-      className={`group relative w-full rounded-[20px] border px-4 py-3.5 text-left transition ${
+      className={clsx(
+        "group relative w-full flex flex-col text-left px-4 py-3 rounded-xl transition-all duration-200 border",
         isSelected
-          ? 'border-accent/90 bg-elevated shadow-selected'
-          : note.pinned
-            ? 'border-transparent bg-pin/80 hover:border-line/70 hover:bg-elevated/80'
-            : 'border-transparent bg-transparent hover:border-line/60 hover:bg-elevated/55'
-      }`}
+          ? "bg-elevated border-line shadow-selected"
+          : "bg-transparent border-transparent hover:bg-line/40"
+      )}
     >
-      <span
-        aria-hidden="true"
-        className={`absolute inset-y-3 left-1.5 w-[3px] rounded-full transition ${
-          isSelected ? 'bg-ink/40' : 'bg-transparent group-hover:bg-line/80'
-        }`}
-      />
-      <div className="flex items-start justify-between gap-4">
-        <p className="line-clamp-1 pr-2 text-sm font-medium text-ink">{getNoteTitle(note)}</p>
-        <div className="flex shrink-0 items-center gap-2 self-start text-xs text-muted">
-          {section === 'notes' && note.pinned ? (
-            <span
-              aria-label="Pinned note"
-              title="Pinned note"
-              className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-canvas/85 text-muted"
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 20 20"
-                className="h-3.5 w-3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M7.25 4.75h5.5" />
-                <path d="M8 4.75v3.2l-2.5 2.1h9l-2.5-2.1v-3.2" />
-                <path d="m10 10 0 5.25" />
-              </svg>
-            </span>
-          ) : null}
-          <p>{section === 'trash' ? formatTrashTimestamp(note.trashedAt ?? note.updatedAt) : formatNoteTimestamp(note.updatedAt)}</p>
+      <div className="flex items-start justify-between gap-3 mb-1">
+        <h3 className={clsx(
+          "font-medium text-sm truncate flex-1",
+          isSelected ? "text-ink" : "text-ink/90 group-hover:text-ink"
+        )}>
+          {getNoteTitle(note)}
+        </h3>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {section === 'notes' && note.pinned && (
+            <Pin size={12} className="text-accent fill-accent/20" />
+          )}
+          <span className="text-[11px] text-muted whitespace-nowrap">
+            {section === 'trash' ? formatTrashTimestamp(note.trashedAt ?? note.updatedAt) : formatNoteTimestamp(note.updatedAt)}
+          </span>
         </div>
       </div>
-      <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{getNotePreview(note)}</p>
-      {section === 'trash' ? (
-        <p className="mt-3 text-[10px] uppercase tracking-[0.18em] text-muted">In Trash</p>
-      ) : null}
+      <p className="text-xs text-muted line-clamp-2 leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity">
+        {getNotePreview(note)}
+      </p>
     </button>
   );
 }

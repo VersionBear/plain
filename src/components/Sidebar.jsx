@@ -1,6 +1,8 @@
 import NoteList from './NoteList';
 import SearchInput from './SearchInput';
 import { useNotesStore } from '../store/useNotesStore';
+import { Moon, Sun, Plus, HardDrive, Download, X, FolderSync } from 'lucide-react';
+import clsx from 'clsx';
 
 function Sidebar({
   notes,
@@ -16,6 +18,7 @@ function Sidebar({
   activeSection,
   storageStatus,
   isHydrated,
+  appVersion,
 }) {
   const createNote = useNotesStore((state) => state.createNote);
   const setActiveSection = useNotesStore((state) => state.setActiveSection);
@@ -23,184 +26,157 @@ function Sidebar({
   const importLegacyNotes = useNotesStore((state) => state.importLegacyNotes);
   const handleCreateNote = onCreateNote ?? createNote;
   const currentSectionCount = activeSection === 'trash' ? trashedNotesCount : activeNotesCount;
+  const currentYear = new Date().getFullYear();
 
   const sidebarContent = (
-    <>
-      <div className="border-b border-line/80 px-5 pb-4 pt-6 md:px-6">
-        <div className="flex items-start justify-between gap-4">
+    <div className="flex flex-col h-full bg-panel">
+      <div className="p-4 md:p-6 border-b border-line flex flex-col gap-5 shrink-0">
+        <div className="flex items-center justify-between">
           <div>
-            <p className="font-serif text-2xl tracking-calm text-ink">Plain</p>
-            <p className="mt-1 text-sm text-muted">No accounts. No plugins. Just notes.</p>
+            <h1 className="text-xl font-semibold tracking-tight text-ink">Plain</h1>
+            <p className="text-xs text-muted mt-0.5 tracking-wide">v{appVersion}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={toggleTheme}
               aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              className="hairline inline-flex h-10 w-10 items-center justify-center rounded-full bg-elevated/90 text-muted transition hover:bg-elevated hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+              className="p-2 text-muted hover:text-ink hover:bg-line/50 rounded-lg transition-colors"
             >
-              {theme === 'dark' ? (
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
-                  <circle cx="10" cy="10" r="3.5" />
-                  <path d="M10 2.5v2.2M10 15.3v2.2M17.5 10h-2.2M4.7 10H2.5M15.3 4.7l-1.5 1.5M6.2 13.8l-1.5 1.5M15.3 15.3l-1.5-1.5M6.2 6.2L4.7 4.7" strokeLinecap="round" />
-                </svg>
-              ) : (
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="currentColor">
-                  <path d="M11.7 2.7a.7.7 0 0 0-.8.8 6.2 6.2 0 0 1-7.4 7.4.7.7 0 0 0-.8.8A7.8 7.8 0 1 0 11.7 2.7Z" />
-                </svg>
-              )}
+              {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
             <button
               type="button"
               onClick={handleCreateNote}
-              className="hairline inline-flex items-center rounded-full bg-elevated/90 px-3.5 py-2 text-sm font-medium text-ink transition hover:bg-elevated focus:outline-none focus:ring-2 focus:ring-accent"
+              className="p-2 text-ink hover:bg-line/50 rounded-lg transition-colors bg-line/30"
             >
-              <span className="mr-2 text-base leading-none text-muted">+</span>
-              New note
+              <Plus size={18} />
             </button>
           </div>
         </div>
 
-        <div className="mt-5 rounded-[24px] border border-line/70 bg-elevated/70 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-muted">Storage</p>
-              <p className="mt-1 text-sm font-medium text-ink">{storageStatus.label}</p>
+        {/* Storage Section */}
+        <div className="rounded-xl border border-line bg-elevated p-3.5 text-sm flex flex-col gap-2 shadow-sm">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 font-medium text-ink">
+              <HardDrive size={16} className="text-muted" />
+              <span>{storageStatus.label}</span>
             </div>
-            {storageStatus.hasFolderConnection ? (
-              <span className="rounded-full border border-accent/70 bg-accent/25 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-ink">
-                Disk-backed
+            {storageStatus.hasFolderConnection && (
+              <span className="text-[10px] uppercase tracking-wider bg-accent/10 text-accent font-semibold px-2 py-0.5 rounded-full">
+                Disk
               </span>
-            ) : null}
+            )}
           </div>
-          <p className="mt-2 text-sm leading-6 text-muted">{storageStatus.detail}</p>
-          {storageStatus.supportsFolderPicker && !storageStatus.hasFolderConnection ? (
+          <p className="text-xs text-muted leading-relaxed">{storageStatus.detail}</p>
+          
+          {storageStatus.supportsFolderPicker && !storageStatus.hasFolderConnection && (
             <button
               type="button"
               onClick={() => void connectFolderStorage()}
               disabled={storageStatus.isConnectingFolder || !isHydrated}
-              className="mt-3 inline-flex items-center rounded-full border border-line/80 bg-panel/88 px-4 py-2 text-sm font-medium text-ink transition hover:border-line hover:bg-panel focus:outline-none focus:ring-2 focus:ring-accent disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-1 w-full flex items-center justify-center gap-2 rounded-lg bg-ink text-canvas py-2 text-xs font-medium transition hover:opacity-90 disabled:opacity-50"
             >
-              {storageStatus.isConnectingFolder ? 'Connecting folder...' : 'Choose notes folder'}
+              <FolderSync size={14} />
+              {storageStatus.isConnectingFolder ? 'Connecting...' : 'Choose folder'}
             </button>
-          ) : null}
-          {storageStatus.pendingImportCount > 0 ? (
-            <div className="mt-3 rounded-[20px] border border-line/70 bg-panel/78 p-3">
-              <p className="text-sm text-ink">
-                Import {storageStatus.pendingImportCount} older {storageStatus.pendingImportCount === 1 ? 'note' : 'notes'} from legacy browser storage.
+          )}
+
+          {storageStatus.pendingImportCount > 0 && (
+            <div className="mt-2 pt-2 border-t border-line">
+              <p className="text-xs text-muted mb-2">
+                {storageStatus.pendingImportCount} older notes available
               </p>
               <button
                 type="button"
                 onClick={() => void importLegacyNotes()}
-                className="mt-3 inline-flex items-center rounded-full border border-line/80 bg-elevated/88 px-4 py-2 text-sm font-medium text-ink transition hover:border-line hover:bg-panel focus:outline-none focus:ring-2 focus:ring-accent"
+                className="w-full flex items-center justify-center gap-2 rounded-lg border border-line py-1.5 text-xs font-medium hover:bg-line/50 transition"
               >
+                <Download size={14} />
                 Import legacy notes
               </button>
             </div>
-          ) : null}
-          {storageStatus.lastError ? (
-            <p className="mt-3 text-sm leading-6 text-ink">{storageStatus.lastError}</p>
-          ) : null}
+          )}
         </div>
 
-        <div className="mt-5">
-          <SearchInput />
-        </div>
+        <SearchInput />
       </div>
 
-      <div className="border-b border-line/80 px-5 py-3 md:px-6">
-        <div className="grid grid-cols-2 gap-2">
+      <div className="px-4 py-3 border-b border-line shrink-0">
+        <div className="flex bg-line/30 rounded-lg p-1">
           <button
             type="button"
             onClick={() => setActiveSection('notes')}
-            className={`rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-accent ${
-              activeSection === 'notes'
-                ? 'border-accent bg-accent text-ink'
-                : 'border-line/80 bg-elevated/70 text-muted hover:border-line hover:bg-panel hover:text-ink'
-            }`}
+            className={clsx(
+              "flex-1 rounded-md py-1.5 text-sm font-medium transition-all duration-200",
+              activeSection === 'notes' ? "bg-elevated text-ink shadow-sm" : "text-muted hover:text-ink"
+            )}
           >
-            Notes {activeNotesCount > 0 ? `(${activeNotesCount})` : ''}
+            Notes {activeNotesCount > 0 && <span className="opacity-60 ml-1">({activeNotesCount})</span>}
           </button>
           <button
             type="button"
             onClick={() => setActiveSection('trash')}
-            className={`rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-accent ${
-              activeSection === 'trash'
-                ? 'border-accent bg-accent text-ink'
-                : 'border-line/80 bg-elevated/70 text-muted hover:border-line hover:bg-panel hover:text-ink'
-            }`}
+            className={clsx(
+              "flex-1 rounded-md py-1.5 text-sm font-medium transition-all duration-200",
+              activeSection === 'trash' ? "bg-elevated text-ink shadow-sm" : "text-muted hover:text-ink"
+            )}
           >
-            Trash {trashedNotesCount > 0 ? `(${trashedNotesCount})` : ''}
+            Trash {trashedNotesCount > 0 && <span className="opacity-60 ml-1">({trashedNotesCount})</span>}
           </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-5 py-3 md:px-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-muted">
-          {activeSection === 'trash'
-            ? currentSectionCount === 1
-              ? '1 trashed note'
-              : `${currentSectionCount} trashed notes`
-            : currentSectionCount === 1
-              ? '1 note'
-              : `${currentSectionCount} notes`}
-        </p>
-        <div className="h-px w-14 bg-line/80" />
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <NoteList notes={notes} totalNotes={currentSectionCount} onSelect={onNoteSelect} section={activeSection} />
       </div>
 
-      <NoteList notes={notes} totalNotes={currentSectionCount} onSelect={onNoteSelect} section={activeSection} />
-    </>
+      <div className="px-4 py-3 border-t border-line shrink-0">
+        <p className="text-xs text-muted text-center">&copy; {currentYear} Plain</p>
+      </div>
+    </div>
   );
 
   return (
     <>
+      {/* Mobile Sidebar Overlay */}
       <div
-        className={`fixed inset-0 z-30 md:hidden ${
-          isMobileOpen ? 'pointer-events-auto' : 'pointer-events-none'
-        }`}
+        className={clsx(
+          "fixed inset-0 z-30 md:hidden transition-opacity duration-300",
+          isMobileOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        )}
       >
         <button
           type="button"
           aria-label="Close notes"
           onClick={onCloseMobile}
-          className={`absolute inset-0 bg-ink/25 backdrop-blur-sm transition ${
-            isMobileOpen ? 'opacity-100' : 'opacity-0'
-          }`}
+          className="absolute inset-0 bg-ink/20 backdrop-blur-sm"
         />
 
         <aside
-          className={`absolute inset-x-0 bottom-0 top-20 flex flex-col overflow-hidden rounded-t-[32px] border border-line/80 bg-panel/97 shadow-[0_-14px_50px_rgba(28,25,23,0.18)] transition duration-300 ${
-            isMobileOpen ? 'translate-y-0' : 'translate-y-full'
-          }`}
+          className={clsx(
+            "absolute inset-y-0 left-0 w-[85%] max-w-[320px] bg-panel shadow-2xl transition-transform duration-300 ease-out flex flex-col",
+            isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
         >
-          <div className="flex items-center justify-between border-b border-line/80 px-5 py-4">
-            <div>
-              <p className="font-serif text-xl tracking-calm text-ink">
-                {activeSection === 'trash' ? 'Trash' : 'Your notes'}
-              </p>
-              <p className="mt-1 text-xs uppercase tracking-[0.18em] text-muted">Mobile library</p>
-            </div>
-            <button
-              type="button"
-              onClick={onCloseMobile}
-              className="hairline inline-flex h-10 w-10 items-center justify-center rounded-full bg-elevated/90 text-muted transition hover:bg-elevated hover:text-ink focus:outline-none focus:ring-2 focus:ring-accent"
-            >
-              <span aria-hidden="true" className="text-lg leading-none">
-                x
-              </span>
+          <div className="flex items-center justify-between px-4 py-4 border-b border-line">
+            <h2 className="font-semibold text-lg text-ink">Menu</h2>
+            <button onClick={onCloseMobile} className="p-2 text-muted hover:bg-line/50 rounded-lg">
+              <X size={20} />
             </button>
           </div>
-
-          {sidebarContent}
+          <div className="flex-1 overflow-y-auto">
+            {sidebarContent}
+          </div>
         </aside>
       </div>
 
+      {/* Desktop Sidebar */}
       <aside
-        className={`hidden w-full shrink-0 flex-col border-b border-line/80 bg-panel/95 transition-[width,opacity,border-color] duration-300 md:flex md:min-h-full md:border-b-0 md:overflow-hidden ${
-          isCollapsed
-            ? 'md:w-0 md:border-r-0 md:pointer-events-none md:opacity-0'
-            : 'md:w-[356px] md:border-r md:opacity-100'
-        }`}
+        className={clsx(
+          "hidden md:flex flex-col border-r border-line bg-panel transition-all duration-300 ease-in-out shrink-0",
+          isCollapsed ? "w-0 opacity-0 overflow-hidden" : "w-[320px] lg:w-[360px] opacity-100"
+        )}
       >
         {sidebarContent}
       </aside>

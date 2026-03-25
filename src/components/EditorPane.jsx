@@ -27,14 +27,18 @@ function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSideb
   }
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-canvas">
+    <main className="flex-1 flex flex-col min-w-0 bg-canvas relative">
       <EditorHeader
         note={note}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={onToggleSidebar}
         activeSection={activeSection}
       />
-      <NoteEditor note={note} isReadOnly={activeSection === 'trash'} />
+      <div className="flex-1 overflow-y-auto w-full flex justify-center">
+        <div className="w-full max-w-3xl px-6 sm:px-12 py-10 lg:py-16">
+          <NoteEditor note={note} isReadOnly={activeSection === 'trash'} />
+        </div>
+      </div>
     </main>
   );
 }
