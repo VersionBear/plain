@@ -1,10 +1,19 @@
 node_modules/
 dist/
+.plain/
 
 vite.log
 vite.err
 vite-*.log
 vite-*.err
+.vite-*.log
+.vite-*.err
+preview-*.log
+preview-*.err
+coverage/
+playwright-report/
+test-results/
+.vscode/
 
 .DS_Store
 Thumbs.db

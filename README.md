@@ -32,9 +32,9 @@ Supported editing features currently wired into the UI:
 
 Important storage detail:
 
-- Notes are saved as HTML strings in the `content` field
+- Notes are edited in-memory as HTML strings in the `content` field
 - Images are embedded as base64 data URLs inside note content
-- This is not a Markdown-first storage model
+- Folder-backed storage converts notes to real Markdown on disk
 
 ## Note Behavior
 
@@ -80,16 +80,19 @@ Folder layout:
 <chosen-folder>/
   plain-index.json
   notes/
-    <note-id>.json
+    <note-id>.md
   trash/
-    <note-id>.json
+    <note-id>.md
 ```
 
 Behavior details:
 
 - The selected folder handle is remembered in IndexedDB
 - If the chosen folder is empty, Plain copies the current in-browser library into it
-- Trashing a note moves its JSON file from `notes/` to `trash/`
+- Notes are written as clean Markdown with lightweight frontmatter metadata
+- The note title is stored as a top-level `# Heading`, so the files feel readable in tools like Obsidian
+- Older `.json` notes and earlier HTML-in-`.md` notes still load for backwards compatibility
+- Trashing a note moves its Markdown file from `notes/` to `trash/`
 - Restoring a note moves it back to `notes/`
 - Permanently deleting a note removes its file from `trash/`
 
@@ -145,17 +148,21 @@ Plain is configured with `vite-plugin-pwa`.
 ```bash
 npm install
 npm run dev
+npm run lint
+npm run test
+npm run test:e2e
 npm run build
 npm run preview
 ```
 
-Current script coverage is intentionally small:
+Current script coverage:
 
 - `dev` starts Vite
+- `lint` runs ESLint
+- `test` runs the Vitest unit suite
+- `test:e2e` runs the Playwright end-to-end suite
 - `build` creates the production bundle
 - `preview` serves the production build locally
-
-There is currently no lint script and no automated test script in `package.json`.
 
 ## Development Notes
 

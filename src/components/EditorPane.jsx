@@ -4,7 +4,13 @@ import EmptyEditorState from './EmptyEditorState';
 import EditorHeader from './EditorHeader';
 import NoteEditor from './NoteEditor';
 
-function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSidebar, activeSection }) {
+function EditorPane({
+  totalNotes,
+  searchQuery,
+  isSidebarCollapsed,
+  onToggleSidebar,
+  activeSection,
+}) {
   const notes = useNotesStore((state) => state.notes);
   const trashedNotes = useNotesStore((state) => state.trashedNotes);
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
@@ -27,15 +33,15 @@ function EditorPane({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSideb
   }
 
   return (
-    <main className="flex-1 flex flex-col min-w-0 bg-canvas relative">
+    <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
       <EditorHeader
         note={note}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={onToggleSidebar}
         activeSection={activeSection}
       />
-      <div className="flex-1 overflow-y-auto w-full flex justify-center">
-        <div className="w-full max-w-3xl px-6 sm:px-12 py-10 lg:py-16">
+      <div className="note-print-shell flex w-full flex-1 justify-center overflow-y-auto">
+        <div className="note-print-frame w-full max-w-3xl px-6 py-8 sm:px-12 sm:py-12 lg:py-20">
           <NoteEditor note={note} isReadOnly={activeSection === 'trash'} />
         </div>
       </div>

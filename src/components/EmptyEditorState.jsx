@@ -1,35 +1,63 @@
 import { useNotesStore } from '../store/useNotesStore';
-import { FileText, Plus, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import {
+  FileText,
+  Plus,
+  PanelLeftClose,
+  PanelLeftOpen,
+  FolderSync,
+  AlertCircle,
+} from 'lucide-react';
 
-function EmptyEditorState({ totalNotes, searchQuery, isSidebarCollapsed, onToggleSidebar, activeSection }) {
+function EmptyEditorState({
+  totalNotes,
+  searchQuery,
+  isSidebarCollapsed,
+  onToggleSidebar,
+  activeSection,
+}) {
   const createNote = useNotesStore((state) => state.createNote);
+  const activeTag = useNotesStore((state) => state.activeTag);
+  const storageStatus = useNotesStore((state) => state.storageStatus);
+  const connectFolderStorage = useNotesStore(
+    (state) => state.connectFolderStorage,
+  );
+
+  const showFolderCTA =
+    activeSection === 'notes' &&
+    storageStatus?.supportsFolderPicker &&
+    !storageStatus?.hasFolderConnection;
 
   return (
-    <main className="flex-1 flex flex-col items-center justify-center bg-canvas p-6 relative">
-      <div className="absolute top-6 left-6 hidden md:block">
+    <main className="relative flex flex-1 flex-col items-center justify-center bg-canvas p-6">
+      <div className="absolute left-6 top-6 hidden md:block">
         <button
           type="button"
           onClick={onToggleSidebar}
-          className="p-2 text-muted hover:text-ink hover:bg-line/50 rounded-lg transition-colors"
+          aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
+          className="rounded-lg p-2 text-muted transition-colors hover:bg-line/50 hover:text-ink"
         >
-          {isSidebarCollapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+          {isSidebarCollapsed ? (
+            <PanelLeftOpen size={20} />
+          ) : (
+            <PanelLeftClose size={20} />
+          )}
         </button>
       </div>
 
-      <div className="max-w-md w-full text-center flex flex-col items-center animate-fade-in">
-        <div className="w-16 h-16 bg-line/30 rounded-2xl flex items-center justify-center mb-6">
+      <div className="flex w-full max-w-md animate-fade-in flex-col items-center text-center">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-line/30">
           <FileText size={32} className="text-muted" />
         </div>
 
-        <h2 className="text-2xl font-semibold text-ink mb-3 tracking-tight">
+        <h2 className="mb-3 text-2xl font-semibold tracking-tight text-ink">
           {activeSection === 'trash'
             ? 'Nothing selected'
             : totalNotes === 0
               ? 'Welcome to Plain'
               : 'Select a note to view'}
         </h2>
-        
-        <p className="text-sm text-muted leading-relaxed mb-8">
+
+        <p className="mb-7 text-sm leading-relaxed text-muted">
           {activeSection === 'trash'
             ? searchQuery
               ? 'Clear search to view trashed notes.'
@@ -38,16 +66,68 @@ function EmptyEditorState({ totalNotes, searchQuery, isSidebarCollapsed, onToggl
                 : 'Select a trashed note to restore or permanently delete.'
             : totalNotes === 0
               ? 'A beautiful, local-first space for your thoughts. Start writing without distractions.'
-              : searchQuery
-                ? 'No notes match your current search.'
+              : searchQuery || activeTag
+                ? activeTag
+                  ? `No notes match #${activeTag}${searchQuery ? ' and your current search.' : '.'}`
+                  : 'No notes match your current search.'
                 : 'Choose a note from the sidebar or create a new one to start writing.'}
         </p>
+
+        {showFolderCTA && (
+          <div className="mb-7 w-full rounded-2xl border border-line bg-elevated/70 p-4 text-left shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="rounded-xl bg-accent/10 p-2 text-accent">
+                  <FolderSync size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-ink">
+                    Store notes in a folder
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-muted">
+                    Optional, but useful if you want real markdown files on disk
+                    instead of browser-only storage.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void connectFolderStorage()}
+                disabled={storageStatus?.isConnectingFolder}
+                title="Connect a folder for persistent storage"
+                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-ink px-3 py-2 text-xs font-medium text-canvas transition hover:opacity-90 disabled:opacity-50"
+              >
+                <FolderSync size={14} />
+                {storageStatus?.isConnectingFolder
+                  ? 'Connecting...'
+                  : storageStatus?.hasStoredFolderHandle
+                    ? 'Reconnect folder'
+                    : 'Choose folder'}
+              </button>
+            </div>
+
+            {storageStatus?.lastError ? (
+              <div className="bg-red-500/8 mt-4 flex items-start gap-2 rounded-lg border border-red-500/20 px-3 py-2 text-xs text-red-600 dark:text-red-300">
+                <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                <span>{storageStatus.lastError}</span>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {!showFolderCTA && storageStatus?.lastError ? (
+          <div className="bg-red-500/8 mb-7 flex w-full items-start gap-2 rounded-2xl border border-red-500/20 px-4 py-3 text-left text-sm text-red-600 dark:text-red-300">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+            <span>{storageStatus.lastError}</span>
+          </div>
+        ) : null}
 
         {activeSection === 'notes' && (
           <button
             type="button"
             onClick={createNote}
-            className="flex items-center gap-2 px-5 py-2.5 bg-ink text-canvas rounded-full font-medium text-sm hover:opacity-90 transition-opacity shadow-sm"
+            title="Create new note"
+            className="flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-canvas shadow-sm transition-opacity hover:opacity-90"
           >
             <Plus size={18} />
             Create new note

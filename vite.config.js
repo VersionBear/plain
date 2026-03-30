@@ -11,9 +11,10 @@ export default defineConfig({
       manifest: {
         name: 'Plain',
         short_name: 'Plain',
-        description: 'Plain is a local-first notes app with no accounts, no plugins, and no setup.',
-        theme_color: '#d7c39b',
-        background_color: '#f6f0e5',
+        description:
+          'Plain is a local-first notes app with no accounts, no plugins, and no setup.',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         icons: [

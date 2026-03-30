@@ -1,13 +1,45 @@
 import { INDEX_FILE_NAME, NOTES_DIR_NAME, TRASH_DIR_NAME } from './constants';
-import { createEmptyIndex, normalizeLibrary, normalizeNote, serializeIndex } from './types';
+import {
+  createEmptyIndex,
+  normalizeLibrary,
+  normalizeNote,
+  serializeIndex,
+} from './types';
+import {
+  parseMarkdownToNote,
+  serializeNoteToMarkdown,
+} from '../utils/noteMarkdown';
 
-function noteFileName(noteId) {
-  return `${noteId}.json`;
+function logStorageWarning(message, context = {}) {
+  console.warn(`[plain-storage] ${message}`, context);
+}
+
+function safeJsonParse(text, fallbackValue, context) {
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    logStorageWarning(
+      'Unable to parse JSON file. Falling back to safe default.',
+      {
+        ...context,
+        error,
+      },
+    );
+    return fallbackValue;
+  }
+}
+
+function noteFileName(noteId, extension = '.md') {
+  return `${noteId}${extension}`;
 }
 
 async function ensureLibraryDirectories(rootHandle) {
-  const notesDir = await rootHandle.getDirectoryHandle(NOTES_DIR_NAME, { create: true });
-  const trashDir = await rootHandle.getDirectoryHandle(TRASH_DIR_NAME, { create: true });
+  const notesDir = await rootHandle.getDirectoryHandle(NOTES_DIR_NAME, {
+    create: true,
+  });
+  const trashDir = await rootHandle.getDirectoryHandle(TRASH_DIR_NAME, {
+    create: true,
+  });
 
   return { notesDir, trashDir };
 }
@@ -33,11 +65,13 @@ async function readJsonFile(parentHandle, fileName, fallbackValue) {
     return fallbackValue;
   }
 
-  return JSON.parse(text);
+  return safeJsonParse(text, fallbackValue, { fileName });
 }
 
 async function writeTextFile(parentHandle, fileName, content) {
-  const fileHandle = await parentHandle.getFileHandle(fileName, { create: true });
+  const fileHandle = await parentHandle.getFileHandle(fileName, {
+    create: true,
+  });
   const writable = await fileHandle.createWritable();
   await writable.write(content);
   await writable.close();
@@ -59,23 +93,47 @@ async function readNotesFromDirectory(directoryHandle, options = {}) {
   const notes = [];
 
   for await (const entry of directoryHandle.values()) {
-    if (entry.kind !== 'file' || !entry.name.endsWith('.json')) {
+    if (
+      entry.kind !== 'file' ||
+      (!entry.name.endsWith('.md') && !entry.name.endsWith('.json'))
+    ) {
       continue;
     }
 
     const file = await entry.getFile();
-    const parsed = JSON.parse(await file.text());
-    const normalized = normalizeNote(parsed, options);
+    const text = await file.text();
+    try {
+      const parsed = entry.name.endsWith('.json')
+        ? safeJsonParse(text, null, { fileName: entry.name })
+        : parseMarkdownToNote(text, {
+            fileName: entry.name,
+            lastModified: file.lastModified,
+          });
+      const normalized = normalizeNote(parsed, options);
 
-    if (normalized) {
-      notes.push(normalized);
+      if (normalized) {
+        notes.push(normalized);
+      } else {
+        logStorageWarning('Skipping invalid note file.', {
+          fileName: entry.name,
+        });
+      }
+    } catch (error) {
+      logStorageWarning('Skipping unreadable note file.', {
+        fileName: entry.name,
+        error,
+      });
     }
   }
 
   return notes;
 }
 
-export function createFileSystemStorage({ kind, supportsUserVisibleFolder, getRootHandle }) {
+export function createFileSystemStorage({
+  kind,
+  supportsUserVisibleFolder,
+  getRootHandle,
+}) {
   let writeQueue = Promise.resolve();
 
   const ensureRootHandle = async () => {
@@ -85,17 +143,21 @@ export function createFileSystemStorage({ kind, supportsUserVisibleFolder, getRo
   };
 
   const runExclusive = (operation) => {
-    const nextOperation = writeQueue.catch(() => undefined).then(async () => {
-      const rootHandle = await ensureRootHandle();
-      return operation(rootHandle);
-    });
+    const nextOperation = writeQueue
+      .catch(() => undefined)
+      .then(async () => {
+        const rootHandle = await ensureRootHandle();
+        return operation(rootHandle);
+      });
 
     writeQueue = nextOperation.catch(() => undefined);
     return nextOperation;
   };
 
   const writeNote = async (rootHandle, note) => {
-    const normalizedNote = normalizeNote(note, { trashed: Boolean(note?.trashedAt) });
+    const normalizedNote = normalizeNote(note, {
+      trashed: Boolean(note?.trashedAt),
+    });
 
     if (!normalizedNote) {
       throw new Error('Unable to save an invalid note.');
@@ -104,10 +166,24 @@ export function createFileSystemStorage({ kind, supportsUserVisibleFolder, getRo
     const { notesDir, trashDir } = await ensureLibraryDirectories(rootHandle);
     const destinationDir = normalizedNote.trashedAt ? trashDir : notesDir;
     const alternateDir = normalizedNote.trashedAt ? notesDir : trashDir;
-    const fileName = noteFileName(normalizedNote.id);
 
-    await writeTextFile(destinationDir, fileName, `${JSON.stringify(normalizedNote, null, 2)}\n`);
+    // Save as .md
+    const fileName = noteFileName(normalizedNote.id, '.md');
+    // Also look for old .json files to delete if they exist
+    const legacyFileName = noteFileName(normalizedNote.id, '.json');
+
+    await writeTextFile(
+      destinationDir,
+      fileName,
+      serializeNoteToMarkdown(normalizedNote),
+    );
+
+    // Delete from alternate dir (for both extensions to be safe)
     await deleteFile(alternateDir, fileName);
+    await deleteFile(alternateDir, legacyFileName);
+
+    // Clean up legacy file in destination dir if it exists
+    await deleteFile(destinationDir, legacyFileName);
 
     return normalizedNote;
   };
@@ -134,7 +210,8 @@ export function createFileSystemStorage({ kind, supportsUserVisibleFolder, getRo
         writeNote(rootHandle, {
           ...note,
           trashedAt:
-            typeof note?.trashedAt === 'number' && Number.isFinite(note.trashedAt)
+            typeof note?.trashedAt === 'number' &&
+            Number.isFinite(note.trashedAt)
               ? note.trashedAt
               : Date.now(),
         }),
@@ -152,13 +229,18 @@ export function createFileSystemStorage({ kind, supportsUserVisibleFolder, getRo
     deleteNotePermanently(noteId) {
       return runExclusive(async (rootHandle) => {
         const { trashDir } = await ensureLibraryDirectories(rootHandle);
-        await deleteFile(trashDir, noteFileName(noteId));
+        await deleteFile(trashDir, noteFileName(noteId, '.md'));
+        await deleteFile(trashDir, noteFileName(noteId, '.json'));
       });
     },
     saveIndex(index) {
       return runExclusive(async (rootHandle) => {
         const serializedIndex = serializeIndex(index);
-        await writeTextFile(rootHandle, INDEX_FILE_NAME, `${JSON.stringify(serializedIndex, null, 2)}\n`);
+        await writeTextFile(
+          rootHandle,
+          INDEX_FILE_NAME,
+          `${JSON.stringify(serializedIndex, null, 2)}\n`,
+        );
         return serializedIndex;
       });
     },

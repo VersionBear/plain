@@ -2,12 +2,17 @@ import { useEffect, useState } from 'react';
 
 const storageKey = 'plain-theme';
 
+function isThemeValue(value) {
+  return value === 'light' || value === 'dark';
+}
+
 function readStoredTheme() {
   if (typeof window === 'undefined') {
     return null;
   }
 
-  return localStorage.getItem(storageKey);
+  const value = localStorage.getItem(storageKey);
+  return isThemeValue(value) ? value : null;
 }
 
 function getSystemTheme() {
@@ -15,7 +20,9 @@ function getSystemTheme() {
     return 'light';
   }
 
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
 }
 
 function getInitialTheme() {
@@ -30,10 +37,16 @@ function applyTheme(theme) {
   const root = document.documentElement;
   const body = document.body;
   const isDark = theme === 'dark';
+  const themeColor = isDark ? '#000000' : '#ffffff';
 
   root.classList.toggle('dark', isDark);
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
+
+  const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeColorMeta) {
+    themeColorMeta.setAttribute('content', themeColor);
+  }
 
   if (!body) {
     return;
@@ -46,14 +59,23 @@ function applyTheme(theme) {
 
 export function useTheme() {
   const [theme, setTheme] = useState(getInitialTheme);
+  const [hasStoredPreference, setHasStoredPreference] = useState(() =>
+    Boolean(readStoredTheme()),
+  );
 
   useEffect(() => {
     applyTheme(theme);
-    localStorage.setItem(storageKey, theme);
-  }, [theme]);
+
+    if (hasStoredPreference) {
+      localStorage.setItem(storageKey, theme);
+      return;
+    }
+
+    localStorage.removeItem(storageKey);
+  }, [hasStoredPreference, theme]);
 
   useEffect(() => {
-    if (readStoredTheme()) {
+    if (hasStoredPreference) {
       return undefined;
     }
 
@@ -62,10 +84,13 @@ export function useTheme() {
     mediaQuery.addEventListener('change', handleChange);
 
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  }, [hasStoredPreference]);
 
   return {
     theme,
-    toggleTheme: () => setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark')),
+    toggleTheme: () => {
+      setHasStoredPreference(true);
+      setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'));
+    },
   };
 }

@@ -3,10 +3,17 @@ import {
   LEGACY_LIBRARY_KEY,
   LEGACY_STORAGE_KEY,
 } from './constants';
-import { createEmptyIndex, normalizeLibrary, normalizeNote, serializeIndex } from './types';
+import {
+  createEmptyIndex,
+  normalizeLibrary,
+  normalizeNote,
+  serializeIndex,
+} from './types';
 
 function canUseLocalStorage() {
-  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  return (
+    typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+  );
 }
 
 function readJsonStorageValue(storageKey) {
@@ -50,16 +57,24 @@ function readFallbackLibrarySnapshot() {
     return normalizeLibrary(storedLibrary);
   }
 
-  const legacyState = extractLegacyPersistedState(readJsonStorageValue(LEGACY_STORAGE_KEY));
+  const legacyState = extractLegacyPersistedState(
+    readJsonStorageValue(LEGACY_STORAGE_KEY),
+  );
 
   if (!legacyState) {
-    return normalizeLibrary({ index: createEmptyIndex(), notes: [], trashedNotes: [] });
+    return normalizeLibrary({
+      index: createEmptyIndex(),
+      notes: [],
+      trashedNotes: [],
+    });
   }
 
   return normalizeLibrary({
     index: {
       selectedNoteId:
-        typeof legacyState.selectedNoteId === 'string' ? legacyState.selectedNoteId : null,
+        typeof legacyState.selectedNoteId === 'string'
+          ? legacyState.selectedNoteId
+          : null,
       activeSection: 'notes',
     },
     notes: Array.isArray(legacyState.notes) ? legacyState.notes : [],
@@ -101,12 +116,14 @@ export function createLegacyLocalStorageStorage() {
   let writeQueue = Promise.resolve();
 
   const runExclusive = (operation) => {
-    const nextOperation = writeQueue.catch(() => undefined).then(async () => {
-      const currentLibrary = readFallbackLibrarySnapshot();
-      const nextLibrary = normalizeLibrary(await operation(currentLibrary));
-      persistFallbackLibrary(nextLibrary);
-      return nextLibrary;
-    });
+    const nextOperation = writeQueue
+      .catch(() => undefined)
+      .then(async () => {
+        const currentLibrary = readFallbackLibrarySnapshot();
+        const nextLibrary = normalizeLibrary(await operation(currentLibrary));
+        persistFallbackLibrary(nextLibrary);
+        return nextLibrary;
+      });
 
     writeQueue = nextOperation.catch(() => undefined);
     return nextOperation;
@@ -119,9 +136,28 @@ export function createLegacyLocalStorageStorage() {
       return readFallbackLibrarySnapshot();
     },
     saveNote(note) {
+      const isTrashed =
+        typeof note?.trashedAt === 'number' && Number.isFinite(note.trashedAt);
+
+      if (isTrashed) {
+        return runExclusive((library) => ({
+          ...library,
+          notes: removeNote(library.notes, note.id),
+          trashedNotes: upsertNote(
+            removeNote(library.trashedNotes, note.id),
+            note,
+            { trashed: true },
+          ),
+        }));
+      }
+
       return runExclusive((library) => ({
         ...library,
-        notes: upsertNote(removeNote(library.notes, note.id), { ...note, trashedAt: null }, { trashed: false }),
+        notes: upsertNote(
+          removeNote(library.notes, note.id),
+          { ...note, trashedAt: null },
+          { trashed: false },
+        ),
         trashedNotes: removeNote(library.trashedNotes, note.id),
       }));
     },
@@ -137,7 +173,11 @@ export function createLegacyLocalStorageStorage() {
       return runExclusive((library) => ({
         ...library,
         notes: removeNote(library.notes, note.id),
-        trashedNotes: upsertNote(removeNote(library.trashedNotes, note.id), trashedNote, { trashed: true }),
+        trashedNotes: upsertNote(
+          removeNote(library.trashedNotes, note.id),
+          trashedNote,
+          { trashed: true },
+        ),
       }));
     },
     restoreNote(note) {
@@ -149,7 +189,9 @@ export function createLegacyLocalStorageStorage() {
 
       return runExclusive((library) => ({
         ...library,
-        notes: upsertNote(removeNote(library.notes, note.id), restoredNote, { trashed: false }),
+        notes: upsertNote(removeNote(library.notes, note.id), restoredNote, {
+          trashed: false,
+        }),
         trashedNotes: removeNote(library.trashedNotes, note.id),
       }));
     },
@@ -172,20 +214,31 @@ export function createLegacyLocalStorageStorage() {
 }
 
 export function getLegacyImportSnapshot() {
-  if (!canUseLocalStorage() || window.localStorage.getItem(LEGACY_IMPORT_FLAG_KEY) === 'true') {
+  if (
+    !canUseLocalStorage() ||
+    window.localStorage.getItem(LEGACY_IMPORT_FLAG_KEY) === 'true'
+  ) {
     return null;
   }
 
-  const legacyState = extractLegacyPersistedState(readJsonStorageValue(LEGACY_STORAGE_KEY));
+  const legacyState = extractLegacyPersistedState(
+    readJsonStorageValue(LEGACY_STORAGE_KEY),
+  );
 
-  if (!legacyState || !Array.isArray(legacyState.notes) || legacyState.notes.length === 0) {
+  if (
+    !legacyState ||
+    !Array.isArray(legacyState.notes) ||
+    legacyState.notes.length === 0
+  ) {
     return null;
   }
 
   return normalizeLibrary({
     index: {
       selectedNoteId:
-        typeof legacyState.selectedNoteId === 'string' ? legacyState.selectedNoteId : null,
+        typeof legacyState.selectedNoteId === 'string'
+          ? legacyState.selectedNoteId
+          : null,
       activeSection: 'notes',
     },
     notes: legacyState.notes,

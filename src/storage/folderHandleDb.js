@@ -1,4 +1,8 @@
-import { FOLDER_DB_NAME, FOLDER_HANDLE_KEY, FOLDER_STORE_NAME } from './constants';
+import {
+  FOLDER_DB_NAME,
+  FOLDER_HANDLE_KEY,
+  FOLDER_STORE_NAME,
+} from './constants';
 
 function openFolderHandleDb() {
   return new Promise((resolve, reject) => {
@@ -13,7 +17,9 @@ function openFolderHandleDb() {
     });
 
     request.addEventListener('success', () => resolve(request.result));
-    request.addEventListener('error', () => reject(request.error ?? new Error('Unable to open storage database.')));
+    request.addEventListener('error', () =>
+      reject(request.error ?? new Error('Unable to open storage database.')),
+    );
   });
 }
 
@@ -28,7 +34,9 @@ async function withFolderStore(mode, callback) {
       database.close();
     });
     transaction.addEventListener('abort', () => {
-      reject(transaction.error ?? new Error('Storage transaction was aborted.'));
+      reject(
+        transaction.error ?? new Error('Storage transaction was aborted.'),
+      );
       database.close();
     });
     transaction.addEventListener('error', () => {
@@ -44,8 +52,14 @@ export async function getStoredFolderHandle() {
   return withFolderStore('readonly', (store) => {
     return new Promise((resolve, reject) => {
       const request = store.get(FOLDER_HANDLE_KEY);
-      request.addEventListener('success', () => resolve(request.result ?? null));
-      request.addEventListener('error', () => reject(request.error ?? new Error('Unable to read stored folder handle.')));
+      request.addEventListener('success', () =>
+        resolve(request.result ?? null),
+      );
+      request.addEventListener('error', () =>
+        reject(
+          request.error ?? new Error('Unable to read stored folder handle.'),
+        ),
+      );
     });
   });
 }
@@ -55,7 +69,9 @@ export async function setStoredFolderHandle(handle) {
     return new Promise((resolve, reject) => {
       const request = store.put(handle, FOLDER_HANDLE_KEY);
       request.addEventListener('success', () => resolve(handle));
-      request.addEventListener('error', () => reject(request.error ?? new Error('Unable to save the folder handle.')));
+      request.addEventListener('error', () =>
+        reject(request.error ?? new Error('Unable to save the folder handle.')),
+      );
     });
   });
 }
@@ -65,7 +81,11 @@ export async function clearStoredFolderHandle() {
     return new Promise((resolve, reject) => {
       const request = store.delete(FOLDER_HANDLE_KEY);
       request.addEventListener('success', () => resolve());
-      request.addEventListener('error', () => reject(request.error ?? new Error('Unable to clear the folder handle.')));
+      request.addEventListener('error', () =>
+        reject(
+          request.error ?? new Error('Unable to clear the folder handle.'),
+        ),
+      );
     });
   });
 }

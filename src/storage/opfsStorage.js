@@ -3,7 +3,9 @@ import { createFileSystemStorage } from './fileSystemHelpers';
 let plainRootDirectoryPromise = null;
 
 export function supportsOpfsStorage() {
-  return typeof navigator !== 'undefined' && Boolean(navigator.storage?.getDirectory);
+  return (
+    typeof navigator !== 'undefined' && Boolean(navigator.storage?.getDirectory)
+  );
 }
 
 async function getPlainRootDirectory() {
@@ -14,7 +16,9 @@ async function getPlainRootDirectory() {
   if (!plainRootDirectoryPromise) {
     plainRootDirectoryPromise = navigator.storage
       .getDirectory()
-      .then((rootHandle) => rootHandle.getDirectoryHandle('plain-data', { create: true }));
+      .then((rootHandle) =>
+        rootHandle.getDirectoryHandle('plain-data', { create: true }),
+      );
   }
 
   return plainRootDirectoryPromise;

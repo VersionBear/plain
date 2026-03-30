@@ -24,7 +24,9 @@ html,
 body {
   background: rgb(var(--color-canvas));
   color: rgb(var(--color-ink));
-  transition: background-color 180ms ease, color 180ms ease;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
 :root.dark,
@@ -68,6 +70,10 @@ textarea {
   color: rgb(var(--color-ink));
 }
 
+* {
+  caret-color: rgb(var(--color-accent));
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -83,6 +89,44 @@ textarea {
 }
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgb(var(--color-muted));
+}
+
+/* Export modal animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Hide export render containers */
+.plain-export-render-container {
+  position: fixed;
+  top: 0;
+  left: -100000px;
+  z-index: -9999;
+  pointer-events: none;
 }
 
 .hairline {
@@ -103,26 +147,26 @@ body.dark .hairline {
   pointer-events: none;
 }
 
-ul[data-type="taskList"] {
+ul[data-type='taskList'] {
   list-style: none;
   padding: 0;
 }
 
-ul[data-type="taskList"] p {
+ul[data-type='taskList'] p {
   margin: 0;
 }
 
-ul[data-type="taskList"] li {
+ul[data-type='taskList'] li {
   display: flex;
 }
 
-ul[data-type="taskList"] li > label {
+ul[data-type='taskList'] li > label {
   flex: 0 0 auto;
   margin-right: 0.5rem;
   user-select: none;
 }
 
-ul[data-type="taskList"] li > div {
+ul[data-type='taskList'] li > div {
   flex: 1 1 auto;
 }
 
@@ -164,15 +208,270 @@ ul[data-type="taskList"] li > div {
   margin: 0;
 }
 
-.tiptap img {
+.tiptap img,
+.ProseMirror img {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
   border: 1px solid rgb(var(--color-line));
 }
 
-.tiptap img.ProseMirror-selectednode {
+.tiptap img.ProseMirror-selectednode,
+.ProseMirror img.ProseMirror-selectednode {
   outline: 3px solid rgb(var(--color-accent));
+}
+
+.tiptap figure[data-type='plain-image'],
+.ProseMirror figure[data-type='plain-image'] {
+  --plain-image-width: 72%;
+  width: min(100%, var(--plain-image-width));
+  max-width: 100%;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.tiptap figure[data-type='plain-image'][data-align='left'],
+.ProseMirror figure[data-type='plain-image'][data-align='left'] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.tiptap figure[data-type='plain-image'][data-align='center'],
+.ProseMirror figure[data-type='plain-image'][data-align='center'] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tiptap figure[data-type='plain-image'][data-align='right'],
+.ProseMirror figure[data-type='plain-image'][data-align='right'] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.tiptap .plain-image-element,
+.ProseMirror .plain-image-element {
+  display: block;
+  width: 100%;
+  margin: 0;
+  background: rgb(var(--color-panel));
+}
+
+.tiptap .plain-image-frame,
+.ProseMirror .plain-image-frame {
+  position: relative;
+  border-radius: 0.75rem;
+}
+
+.tiptap .plain-image-caption-shell,
+.ProseMirror .plain-image-caption-shell {
+  margin-top: 0.75rem;
+}
+
+.tiptap .plain-image-caption-input,
+.ProseMirror .plain-image-caption-input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: rgb(var(--color-muted));
+  font-size: 0.92rem;
+  line-height: 1.5;
+  text-align: center;
+  outline: none;
+}
+
+.tiptap .plain-image-caption-input::placeholder,
+.ProseMirror .plain-image-caption-input::placeholder {
+  color: rgb(var(--color-muted) / 0.65);
+}
+
+.tiptap .plain-image-caption-text,
+.ProseMirror .plain-image-caption-text {
+  display: block;
+  color: rgb(var(--color-muted));
+  font-size: 0.92rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.tiptap .plain-image-controls,
+.ProseMirror .plain-image-controls {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.45rem;
+  width: max-content;
+  max-width: calc(100vw - 3rem);
+  margin-bottom: 0.65rem;
+  padding: 0.35rem;
+  border: 1px solid rgb(var(--color-line) / 0.9);
+  border-radius: 999px;
+  background: rgb(var(--color-elevated) / 0.94);
+  box-shadow: 0 16px 32px rgb(var(--color-ink) / 0.12);
+  backdrop-filter: blur(16px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tiptap .plain-image-controls::-webkit-scrollbar,
+.ProseMirror .plain-image-controls::-webkit-scrollbar {
+  display: none;
+}
+
+.tiptap figure[data-type='plain-image'].is-selected .plain-image-controls,
+.tiptap figure[data-type='plain-image']:hover .plain-image-controls,
+.ProseMirror figure[data-type='plain-image'].is-selected .plain-image-controls,
+.ProseMirror figure[data-type='plain-image']:hover .plain-image-controls {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tiptap .plain-image-control-group,
+.ProseMirror .plain-image-control-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.tiptap .plain-image-segmented-control,
+.ProseMirror .plain-image-segmented-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem;
+  border: 1px solid rgb(var(--color-line));
+  border-radius: 999px;
+  background: rgb(var(--color-canvas) / 0.88);
+}
+
+.tiptap .plain-image-preset-group,
+.ProseMirror .plain-image-preset-group {
+  gap: 0.125rem;
+}
+
+.tiptap .plain-image-drag-button,
+.ProseMirror .plain-image-drag-button,
+.tiptap .plain-image-icon-button,
+.ProseMirror .plain-image-icon-button,
+.tiptap .plain-image-preset-button,
+.ProseMirror .plain-image-preset-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.tiptap .plain-image-drag-button,
+.ProseMirror .plain-image-drag-button,
+.tiptap .plain-image-icon-button,
+.ProseMirror .plain-image-icon-button {
+  width: 2rem;
+}
+
+.tiptap .plain-image-drag-button,
+.ProseMirror .plain-image-drag-button {
+  background: rgb(var(--color-canvas) / 0.75);
+  cursor: grab;
+}
+
+.tiptap .plain-image-drag-button:active,
+.ProseMirror .plain-image-drag-button:active {
+  cursor: grabbing;
+}
+
+.tiptap .plain-image-drag-button:hover,
+.ProseMirror .plain-image-drag-button:hover,
+.tiptap .plain-image-icon-button:hover,
+.tiptap .plain-image-icon-button.is-active,
+.ProseMirror .plain-image-icon-button:hover,
+.ProseMirror .plain-image-icon-button.is-active,
+.tiptap .plain-image-preset-button:hover,
+.tiptap .plain-image-preset-button.is-active,
+.ProseMirror .plain-image-preset-button:hover,
+.ProseMirror .plain-image-preset-button.is-active {
+  background: rgb(var(--color-accent) / 0.08);
+  color: rgb(var(--color-ink));
+}
+
+.tiptap .plain-image-preset-button,
+.ProseMirror .plain-image-preset-button {
+  min-width: 2.1rem;
+  padding: 0 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.tiptap .plain-image-resize-handle,
+.ProseMirror .plain-image-resize-handle {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 1px solid rgb(var(--color-canvas) / 0.28);
+  border-radius: 0.45rem;
+  background:
+    linear-gradient(
+      135deg,
+      transparent 0 36%,
+      rgb(var(--color-canvas) / 0.94) 36% 45%,
+      transparent 45% 56%,
+      rgb(var(--color-canvas) / 0.94) 56% 65%,
+      transparent 65%
+    ),
+    rgb(var(--color-ink) / 0.48);
+  box-shadow: 0 10px 24px rgb(var(--color-ink) / 0.18);
+  cursor: nwse-resize;
+  opacity: 0;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.tiptap .plain-image-resize-handle:hover,
+.ProseMirror .plain-image-resize-handle:hover {
+  transform: scale(1.08);
+}
+
+.tiptap figure[data-type='plain-image'].is-selected .plain-image-resize-handle,
+.tiptap figure[data-type='plain-image']:hover .plain-image-resize-handle,
+.ProseMirror
+  figure[data-type='plain-image'].is-selected
+  .plain-image-resize-handle,
+.ProseMirror figure[data-type='plain-image']:hover .plain-image-resize-handle {
+  opacity: 1;
+}
+
+.tiptap .plain-image-size-tooltip,
+.ProseMirror .plain-image-size-tooltip {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  padding: 0.38rem 0.62rem;
+  border-radius: 999px;
+  background: rgb(var(--color-ink) / 0.84);
+  color: rgb(var(--color-canvas));
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  box-shadow: 0 14px 28px rgb(var(--color-ink) / 0.18);
+  pointer-events: none;
 }
 
 .tiptap a {
@@ -184,4 +483,160 @@ ul[data-type="taskList"] li > div {
 
 .tiptap a:hover {
   opacity: 0.8;
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 16mm 18mm 18mm;
+  }
+
+  /* Hide all UI elements */
+  aside,
+  header,
+  .md\:hidden.shrink-0.border-b,
+  button,
+  .editor-toolbar,
+  .plain-export-menu {
+    display: none !important;
+  }
+
+  /* Reset layout for printing */
+  body,
+  html,
+  #root,
+  .h-dvh,
+  .flex-1.flex.min-h-0.w-full {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  .note-print-shell {
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .note-print-frame {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .note-print-title,
+  input[aria-label='Note Title'] {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 0 18pt !important;
+    padding: 0 !important;
+    color: black !important;
+    -webkit-text-fill-color: black !important;
+    font-size: 24pt !important;
+    font-weight: 700 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.02em !important;
+    opacity: 1 !important;
+  }
+
+  .note-print-content,
+  .note-print-content .prose,
+  .note-print-content .ProseMirror {
+    color: #000 !important;
+    opacity: 1 !important;
+  }
+
+  .note-print-content *,
+  .note-print-content .prose *,
+  .note-print-content .ProseMirror * {
+    color: #000 !important;
+    opacity: 1 !important;
+    text-shadow: none !important;
+  }
+
+  .note-print-content .prose {
+    --tw-prose-body: #000 !important;
+    --tw-prose-headings: #000 !important;
+    --tw-prose-lead: #000 !important;
+    --tw-prose-links: #0b57d0 !important;
+    --tw-prose-bold: #000 !important;
+    --tw-prose-counters: #000 !important;
+    --tw-prose-bullets: #000 !important;
+    --tw-prose-hr: #d1d5db !important;
+    --tw-prose-quotes: #000 !important;
+    --tw-prose-quote-borders: #d1d5db !important;
+    --tw-prose-captions: #000 !important;
+    --tw-prose-code: #000 !important;
+    --tw-prose-pre-code: #000 !important;
+    --tw-prose-pre-bg: #f5f5f5 !important;
+    --tw-prose-th-borders: #d1d5db !important;
+    --tw-prose-td-borders: #e5e7eb !important;
+    max-width: none !important;
+  }
+
+  .note-print-content p,
+  .note-print-content li,
+  .note-print-content blockquote,
+  .note-print-content td,
+  .note-print-content th {
+    color: #000 !important;
+  }
+
+  .note-print-content a,
+  .note-print-content .prose a,
+  .note-print-content .ProseMirror a {
+    color: #0b57d0 !important;
+    text-decoration: underline !important;
+  }
+
+  .note-print-content pre,
+  .note-print-content code {
+    color: #000 !important;
+  }
+
+  .note-print-content pre {
+    border: 1px solid #d1d5db !important;
+    background: #f8fafc !important;
+  }
+
+  .note-print-content table th {
+    background: #f3f4f6 !important;
+  }
+
+  .note-print-content img {
+    break-inside: avoid;
+  }
+
+  .note-print-content figure[data-type='plain-image'] {
+    width: min(100%, var(--plain-image-width, 72%));
+    break-inside: avoid;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .note-print-content figure[data-type='plain-image'][data-align='center'] {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .note-print-content figure[data-type='plain-image'][data-align='right'] {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  .note-print-content figcaption {
+    color: #4b5563 !important;
+    text-align: center;
+    margin-top: 0.75rem;
+  }
 }

@@ -40,7 +40,10 @@ function parseInlineMarkdown(text, keyPrefix) {
     );
   } else if (match[7] || match[9]) {
     nodes.push(
-      <strong key={`${keyPrefix}-strong-${index}`} className="font-semibold text-ink">
+      <strong
+        key={`${keyPrefix}-strong-${index}`}
+        className="font-semibold text-ink"
+      >
         {toInlineNodes(match[7] ?? match[9], `${keyPrefix}-strong-text`)}
       </strong>,
     );
@@ -75,7 +78,10 @@ function renderParagraph(text, key) {
 export function renderMarkdown(content) {
   if (!content.trim()) {
     return [
-      <p key="empty" className="text-[15px] italic leading-8 text-muted/80 md:text-base">
+      <p
+        key="empty"
+        className="text-[15px] italic leading-8 text-muted/80 md:text-base"
+      >
         Start typing to see your markdown preview here.
       </p>,
     ];
@@ -110,7 +116,7 @@ export function renderMarkdown(content) {
 
       blocks.push(
         <pre
-          key={`block-${key += 1}`}
+          key={`block-${(key += 1)}`}
           className="overflow-x-auto rounded-[22px] border border-line/80 bg-canvas px-4 py-4 text-sm leading-7 text-ink shadow-panel"
         >
           <code>{codeLines.join('\n')}</code>
@@ -135,7 +141,7 @@ export function renderMarkdown(content) {
 
       blocks.push(
         <HeadingTag
-          key={`block-${key += 1}`}
+          key={`block-${(key += 1)}`}
           className={`font-serif font-medium tracking-calm text-ink ${headingClasses[level]}`}
         >
           {toInlineNodes(text, `heading-${key}`)}
@@ -147,7 +153,10 @@ export function renderMarkdown(content) {
 
     if (/^([-*_])(?:\s*\1){2,}\s*$/.test(line.trim())) {
       blocks.push(
-        <hr key={`block-${key += 1}`} className="border-0 border-t border-line/90" />,
+        <hr
+          key={`block-${(key += 1)}`}
+          className="border-0 border-t border-line/90"
+        />,
       );
       index += 1;
       continue;
@@ -163,10 +172,12 @@ export function renderMarkdown(content) {
 
       blocks.push(
         <blockquote
-          key={`block-${key += 1}`}
+          key={`block-${(key += 1)}`}
           className="border-l-2 border-accent pl-5 text-muted"
         >
-          <div className="space-y-4">{renderMarkdown(quoteLines.join('\n'))}</div>
+          <div className="space-y-4">
+            {renderMarkdown(quoteLines.join('\n'))}
+          </div>
         </blockquote>,
       );
       continue;
@@ -181,9 +192,15 @@ export function renderMarkdown(content) {
       }
 
       blocks.push(
-        <ul key={`block-${key += 1}`} className="list-disc space-y-2 pl-6 marker:text-muted">
+        <ul
+          key={`block-${(key += 1)}`}
+          className="list-disc space-y-2 pl-6 marker:text-muted"
+        >
           {items.map((item, itemIndex) => (
-            <li key={`unordered-${itemIndex}`} className="pl-1 text-[15px] leading-8 md:text-base">
+            <li
+              key={`unordered-${itemIndex}`}
+              className="pl-1 text-[15px] leading-8 md:text-base"
+            >
               {toInlineNodes(item, `unordered-${key}-${itemIndex}`)}
             </li>
           ))}
@@ -201,9 +218,15 @@ export function renderMarkdown(content) {
       }
 
       blocks.push(
-        <ol key={`block-${key += 1}`} className="list-decimal space-y-2 pl-6 marker:text-muted">
+        <ol
+          key={`block-${(key += 1)}`}
+          className="list-decimal space-y-2 pl-6 marker:text-muted"
+        >
           {items.map((item, itemIndex) => (
-            <li key={`ordered-${itemIndex}`} className="pl-1 text-[15px] leading-8 md:text-base">
+            <li
+              key={`ordered-${itemIndex}`}
+              className="pl-1 text-[15px] leading-8 md:text-base"
+            >
               {toInlineNodes(item, `ordered-${key}-${itemIndex}`)}
             </li>
           ))}
@@ -229,7 +252,9 @@ export function renderMarkdown(content) {
       index += 1;
     }
 
-    blocks.push(renderParagraph(paragraphLines.join(' '), `block-${key += 1}`));
+    blocks.push(
+      renderParagraph(paragraphLines.join(' '), `block-${(key += 1)}`),
+    );
   }
 
   return blocks;

@@ -1,4 +1,6 @@
 import { LIBRARY_VERSION } from './constants';
+import { extractTagsFromContent, normalizeTags } from '../utils/notes';
+import { sanitizeNoteHtml } from '../utils/noteMarkdown';
 
 export function createEmptyIndex() {
   return {
@@ -14,8 +16,12 @@ export function normalizeNote(note, options = {}) {
   }
 
   const fallbackTimestamp = Date.now();
-  const createdAt = Number.isFinite(note.createdAt) ? note.createdAt : fallbackTimestamp;
-  const updatedAt = Number.isFinite(note.updatedAt) ? note.updatedAt : createdAt;
+  const createdAt = Number.isFinite(note.createdAt)
+    ? note.createdAt
+    : fallbackTimestamp;
+  const updatedAt = Number.isFinite(note.updatedAt)
+    ? note.updatedAt
+    : createdAt;
   const requestedTrashState = options.trashed ?? false;
   const rawTrashedAt = note.trashedAt;
   const trashedAt =
@@ -29,10 +35,17 @@ export function normalizeNote(note, options = {}) {
     return null;
   }
 
+  const hasExplicitTags = Object.prototype.hasOwnProperty.call(note, 'tags');
+  const content =
+    typeof note.content === 'string' ? sanitizeNoteHtml(note.content) : '';
+
   return {
     id: note.id,
     title: typeof note.title === 'string' ? note.title : '',
-    content: typeof note.content === 'string' ? note.content : '',
+    content,
+    tags: hasExplicitTags
+      ? normalizeTags(note.tags, '', { allowContentFallback: false })
+      : extractTagsFromContent(content),
     pinned: Boolean(note.pinned),
     createdAt,
     updatedAt,
@@ -49,21 +62,25 @@ export function normalizeNotes(notes, options = {}) {
 }
 
 export function normalizeLibrary(snapshot = {}) {
-  const indexSource = snapshot.index && typeof snapshot.index === 'object' ? snapshot.index : {};
+  const indexSource =
+    snapshot.index && typeof snapshot.index === 'object' ? snapshot.index : {};
   const index = {
     ...createEmptyIndex(),
     ...indexSource,
     version: LIBRARY_VERSION,
     activeSection: indexSource.activeSection === 'trash' ? 'trash' : 'notes',
     selectedNoteId:
-      typeof indexSource.selectedNoteId === 'string' && indexSource.selectedNoteId
+      typeof indexSource.selectedNoteId === 'string' &&
+      indexSource.selectedNoteId
         ? indexSource.selectedNoteId
         : null,
   };
 
   return {
     notes: normalizeNotes(snapshot.notes, { trashed: false }),
-    trashedNotes: normalizeNotes(snapshot.trashedNotes ?? snapshot.trash, { trashed: true }),
+    trashedNotes: normalizeNotes(snapshot.trashedNotes ?? snapshot.trash, {
+      trashed: true,
+    }),
     index,
   };
 }

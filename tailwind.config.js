@@ -19,13 +19,29 @@ export default {
       },
       boxShadow: {
         panel: '0 1px 2px rgba(28, 25, 23, 0.04)',
-        selected: '0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02)',
-        floating: '0 10px 40px -10px rgba(0,0,0,0.1), 0 4px 10px -5px rgba(0,0,0,0.04)',
+        selected:
+          '0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02)',
+        floating:
+          '0 10px 40px -10px rgba(0,0,0,0.1), 0 4px 10px -5px rgba(0,0,0,0.04)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['ui-serif', 'Georgia', 'Cambria', '"Times New Roman"', 'Times', 'serif'],
-        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+        serif: [
+          'ui-serif',
+          'Georgia',
+          'Cambria',
+          '"Times New Roman"',
+          'Times',
+          'serif',
+        ],
+        mono: [
+          'ui-monospace',
+          'SFMono-Regular',
+          'Menlo',
+          'Monaco',
+          'Consolas',
+          'monospace',
+        ],
       },
       letterSpacing: {
         calm: '-0.015em',
@@ -43,13 +59,18 @@ export default {
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
-        }
+        },
       },
       typography: {
         DEFAULT: {
           css: {
             maxWidth: '100%',
             color: 'rgb(var(--color-ink))',
+            lineHeight: '1.8',
+            p: {
+              marginTop: '1.25em',
+              marginBottom: '1.25em',
+            },
             a: {
               color: 'rgb(var(--color-accent))',
               '&:hover': {
