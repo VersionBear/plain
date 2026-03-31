@@ -9,11 +9,11 @@ import {
 import packageJson from '../package.json';
 import EditorPane from './components/EditorPane';
 import Sidebar from './components/Sidebar';
+import { useTheme } from './hooks/useTheme';
 import {
   selectHasEarlyAccess,
   useFoundersStore,
 } from './store/useFoundersStore';
-import { useTheme } from './hooks/useTheme';
 import { useExportStore } from './store/useExportStore';
 import { useNotesStore } from './store/useNotesStore';
 import {
@@ -29,6 +29,7 @@ const ExportModal = lazy(() => import('./components/ExportModal'));
 const FoundersRedeemModal = lazy(
   () => import('./components/FoundersRedeemModal'),
 );
+const SettingsModal = lazy(() => import('./components/SettingsModal'));
 
 function HydrationScreen() {
   return (
@@ -49,8 +50,8 @@ function HydrationScreen() {
 }
 
 function App() {
+  const themeState = useTheme();
   const appVersion = packageJson.version;
-  const { theme, toggleTheme } = useTheme();
   const notes = useNotesStore((state) => state.notes);
   const trashedNotes = useNotesStore((state) => state.trashedNotes);
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
@@ -63,11 +64,13 @@ function App() {
   const storageStatus = useNotesStore((state) => state.storageStatus);
   const isExportModalOpen = useExportStore((state) => state.isExportModalOpen);
   const hasEarlyAccess = useFoundersStore(selectHasEarlyAccess);
+  const activeProductName = useFoundersStore((state) => state.productName);
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] =
     useState(false);
   const [isFoundersModalOpen, setIsFoundersModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   useEffect(() => {
     void hydrateLibrary();
@@ -132,8 +135,6 @@ function App() {
           notes={visibleNotes}
           activeNotesCount={notes.length}
           trashedNotesCount={trashedNotes.length}
-          theme={theme}
-          toggleTheme={toggleTheme}
           onCreateNote={handleCreateNote}
           onNoteSelect={() => setIsMobileSidebarOpen(false)}
           isMobileOpen={isMobileSidebarOpen}
@@ -146,7 +147,9 @@ function App() {
           isHydrated={isHydrated}
           appVersion={appVersion}
           hasEarlyAccess={hasEarlyAccess}
+          activeProductName={activeProductName}
           onOpenFoundersRedeem={() => setIsFoundersModalOpen(true)}
+          onOpenSettings={() => setIsSettingsModalOpen(true)}
         />
         <EditorPane
           totalNotes={
@@ -173,6 +176,17 @@ function App() {
           <FoundersRedeemModal
             isOpen={isFoundersModalOpen}
             onClose={() => setIsFoundersModalOpen(false)}
+          />
+        </Suspense>
+      ) : null}
+
+      {isSettingsModalOpen ? (
+        <Suspense fallback={null}>
+          <SettingsModal
+            isOpen={isSettingsModalOpen}
+            onClose={() => setIsSettingsModalOpen(false)}
+            theme={themeState.theme}
+            setTheme={themeState.setTheme}
           />
         </Suspense>
       ) : null}

@@ -2,14 +2,15 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
   createFoundersAccessRecord,
-  FOUNDERS_PACK_PRODUCT_ID,
-  FOUNDERS_PACK_PRODUCT_NAME,
+  PLAIN_PRO_PRODUCT_ID,
+  PLAIN_PRO_PRODUCT_NAME,
   verifyFoundersLicense,
 } from '../utils/foundersPack';
+import { getPlanTier, hasPlanAccess, PLAN_TIERS } from '../utils/planFeatures';
 
 const defaultPersistedState = {
-  productId: FOUNDERS_PACK_PRODUCT_ID,
-  productName: FOUNDERS_PACK_PRODUCT_NAME,
+  productId: PLAIN_PRO_PRODUCT_ID,
+  productName: PLAIN_PRO_PRODUCT_NAME,
   licenseKey: '',
   maskedLicenseKey: '',
   customerName: '',
@@ -23,6 +24,11 @@ const defaultPersistedState = {
 };
 
 export const selectHasEarlyAccess = (state) => state.hasEarlyAccess;
+export const selectPlanTier = (state) => getPlanTier(state);
+export const selectHasProAccess = (state) =>
+  hasPlanAccess(selectPlanTier(state), PLAN_TIERS.PRO);
+export const selectHasFounderAccess = (state) =>
+  hasPlanAccess(selectPlanTier(state), PLAN_TIERS.FOUNDER);
 
 export const useFoundersStore = create(
   persist(

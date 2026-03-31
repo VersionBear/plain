@@ -43,6 +43,188 @@ body.dark {
   --color-chrome: 10 10 10;
 }
 
+:root.paper,
+html.paper,
+body.paper {
+  --color-canvas: 250 246 239;
+  --color-panel: 244 238 230;
+  --color-line: 223 214 201;
+  --color-ink: 68 60 52;
+  --color-muted: 132 122 111;
+  --color-accent: 180 107 63;
+  --color-pin: 240 233 223;
+  --color-elevated: 255 251 245;
+  --color-chrome: 244 238 230;
+}
+
+:root.evergreen,
+html.evergreen,
+body.evergreen {
+  --color-canvas: 14 29 24;
+  --color-panel: 21 39 33;
+  --color-line: 46 75 65;
+  --color-ink: 230 240 235;
+  --color-muted: 150 177 167;
+  --color-accent: 110 201 153;
+  --color-pin: 28 51 43;
+  --color-elevated: 24 46 38;
+  --color-chrome: 21 39 33;
+}
+
+:root.nord,
+html.nord,
+body.nord {
+  --color-canvas: 46 52 64;
+  --color-panel: 59 66 82;
+  --color-line: 67 76 94;
+  --color-ink: 216 222 233;
+  --color-muted: 153 162 181;
+  --color-accent: 136 192 208;
+  --color-pin: 76 86 106;
+  --color-elevated: 67 76 94;
+  --color-chrome: 59 66 82;
+}
+
+:root.solarized,
+html.solarized,
+body.solarized {
+  --color-canvas: 253 246 227;
+  --color-panel: 238 232 213;
+  --color-line: 219 214 196;
+  --color-ink: 101 123 131;
+  --color-muted: 147 161 161;
+  --color-accent: 38 139 210;
+  --color-pin: 238 232 213;
+  --color-elevated: 253 246 227;
+  --color-chrome: 238 232 213;
+}
+
+:root.high-contrast,
+html.high-contrast,
+body.high-contrast {
+  --color-canvas: 0 0 0;
+  --color-panel: 0 0 0;
+  --color-line: 255 255 255;
+  --color-ink: 255 255 255;
+  --color-muted: 200 200 200;
+  --color-accent: 255 255 0;
+  --color-pin: 0 0 0;
+  --color-elevated: 0 0 0;
+  --color-chrome: 0 0 0;
+}
+
+:root.graphite,
+html.graphite,
+body.graphite {
+  --color-canvas: 24 24 27;
+  --color-panel: 30 30 34;
+  --color-line: 63 63 70;
+  --color-ink: 244 244 245;
+  --color-muted: 161 161 170;
+  --color-accent: 244 114 182;
+  --color-pin: 39 39 42;
+  --color-elevated: 39 39 42;
+  --color-chrome: 30 30 34;
+}
+
+:root.oceanic,
+html.oceanic,
+body.oceanic {
+  --color-canvas: 9 24 38;
+  --color-panel: 14 33 50;
+  --color-line: 37 72 98;
+  --color-ink: 225 240 250;
+  --color-muted: 143 178 201;
+  --color-accent: 93 201 255;
+  --color-pin: 17 44 65;
+  --color-elevated: 18 41 60;
+  --color-chrome: 14 33 50;
+}
+
+:root.ember,
+html.ember,
+body.ember {
+  --color-canvas: 28 16 12;
+  --color-panel: 39 23 18;
+  --color-line: 88 49 39;
+  --color-ink: 247 233 225;
+  --color-muted: 197 157 142;
+  --color-accent: 255 143 102;
+  --color-pin: 49 29 23;
+  --color-elevated: 45 27 21;
+  --color-chrome: 39 23 18;
+}
+
+:root.linen-blue,
+html.linen-blue,
+body.linen-blue {
+  --color-canvas: 241 245 250;
+  --color-panel: 232 238 246;
+  --color-line: 203 214 229;
+  --color-ink: 46 61 82;
+  --color-muted: 111 129 154;
+  --color-accent: 76 118 204;
+  --color-pin: 226 233 244;
+  --color-elevated: 248 250 253;
+  --color-chrome: 232 238 246;
+}
+
+:root.rose-paper,
+html.rose-paper,
+body.rose-paper {
+  --color-canvas: 255 248 244;
+  --color-panel: 253 241 237;
+  --color-line: 237 217 214;
+  --color-ink: 91 53 57;
+  --color-muted: 154 122 126;
+  --color-accent: 205 94 120;
+  --color-pin: 253 241 237;
+  --color-elevated: 255 248 244;
+  --color-chrome: 253 241 237;
+}
+
+:root.midnight,
+html.midnight,
+body.midnight {
+  --color-canvas: 12 13 24;
+  --color-panel: 20 21 36;
+  --color-line: 49 50 72;
+  --color-ink: 238 236 255;
+  --color-muted: 161 160 189;
+  --color-accent: 251 191 36;
+  --color-pin: 30 31 46;
+  --color-elevated: 30 31 46;
+  --color-chrome: 20 21 36;
+}
+
+:root.aurora-noir,
+html.aurora-noir,
+body.aurora-noir {
+  --color-canvas: 10 11 20;
+  --color-panel: 18 20 33;
+  --color-line: 50 56 86;
+  --color-ink: 238 241 255;
+  --color-muted: 158 166 208;
+  --color-accent: 126 255 208;
+  --color-pin: 26 29 47;
+  --color-elevated: 25 28 46;
+  --color-chrome: 18 20 33;
+}
+
+:root.porcelain-ink,
+html.porcelain-ink,
+body.porcelain-ink {
+  --color-canvas: 248 246 242;
+  --color-panel: 241 237 231;
+  --color-line: 220 212 202;
+  --color-ink: 37 41 54;
+  --color-muted: 114 117 130;
+  --color-accent: 92 70 201;
+  --color-pin: 235 230 223;
+  --color-elevated: 253 251 247;
+  --color-chrome: 241 237 231;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: rgb(var(--color-line)) transparent;

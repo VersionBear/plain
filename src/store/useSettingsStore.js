@@ -8,13 +8,21 @@ export const useSettingsStore = create(
       isZenMode: false,
       isCompactMode: false,
       isWideMode: false,
-      toggleWriterMode: () => set((state) => ({ isWriterMode: !state.isWriterMode })),
+      isOutlinePanelOpen: true,
+      showInsightsPill: true,
+      toggleWriterMode: () =>
+        set((state) => ({ isWriterMode: !state.isWriterMode })),
       toggleZenMode: () => set((state) => ({ isZenMode: !state.isZenMode })),
-      toggleCompactMode: () => set((state) => ({ isCompactMode: !state.isCompactMode })),
+      toggleCompactMode: () =>
+        set((state) => ({ isCompactMode: !state.isCompactMode })),
       toggleWideMode: () => set((state) => ({ isWideMode: !state.isWideMode })),
+      toggleOutlinePanel: () =>
+        set((state) => ({ isOutlinePanelOpen: !state.isOutlinePanelOpen })),
+      toggleInsightsPill: () =>
+        set((state) => ({ showInsightsPill: !state.showInsightsPill })),
     }),
     {
       name: 'plain-settings',
-    }
-  )
+    },
+  ),
 );

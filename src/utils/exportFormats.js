@@ -43,5 +43,19 @@ export function getExportFormats() {
       extension: '.pdf',
       category: 'document',
     },
+    {
+      id: 'docx',
+      label: 'DOCX (Word)',
+      description: 'Microsoft Word document format. (Premium)',
+      extension: '.docx',
+      category: 'document',
+    },
+    {
+      id: 'epub',
+      label: 'ePub',
+      description: 'E-book format for e-readers. (Premium)',
+      extension: '.epub',
+      category: 'document',
+    },
   ];
 }

@@ -1,5 +1,6 @@
 import { useNotesStore } from '../store/useNotesStore';
 import { FileText, Plus, FolderSync, AlertCircle } from 'lucide-react';
+import { getDailyEmptyStateMessage } from '../utils/emptyStateContent';
 
 function EmptyEditorState({
   totalNotes,
@@ -12,6 +13,12 @@ function EmptyEditorState({
   const connectFolderStorage = useNotesStore(
     (state) => state.connectFolderStorage,
   );
+  const dailyMessage = getDailyEmptyStateMessage();
+  const showDailyMessage =
+    activeSection === 'notes' &&
+    totalNotes > 0 &&
+    !searchQuery &&
+    !activeTag;
 
   const showFolderCTA =
     activeSection === 'notes' &&
@@ -25,12 +32,20 @@ function EmptyEditorState({
           <FileText size={32} className="text-muted" />
         </div>
 
+        {showDailyMessage ? (
+          <span className="mb-3 rounded-full bg-line/35 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+            {dailyMessage.eyebrow}
+          </span>
+        ) : null}
+
         <h2 className="mb-3 text-2xl font-semibold tracking-tight text-ink">
           {activeSection === 'trash'
             ? 'Nothing selected'
             : totalNotes === 0
               ? 'Welcome to Plain'
-              : 'Select a note to view'}
+              : searchQuery || activeTag
+                ? 'Select a note to view'
+                : dailyMessage.title}
         </h2>
 
         <p className="mb-7 text-sm leading-relaxed text-muted">
@@ -46,7 +61,7 @@ function EmptyEditorState({
                 ? activeTag
                   ? `No notes match #${activeTag}${searchQuery ? ' and your current search.' : '.'}`
                   : 'No notes match your current search.'
-                : 'Choose a note from the sidebar or create a new one to start writing.'}
+                : dailyMessage.body}
         </p>
 
         {showFolderCTA && (

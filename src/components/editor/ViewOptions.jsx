@@ -1,21 +1,42 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSettingsStore } from '../../store/useSettingsStore';
-import { Settings2, Type, List, Maximize2, Minimize, Maximize } from 'lucide-react';
+import {
+  Settings2,
+  Type,
+  List,
+  Maximize2,
+  Minimize,
+  Maximize,
+  Lock,
+} from 'lucide-react';
+import {
+  selectHasFounderAccess,
+  useFoundersStore,
+} from '../../store/useFoundersStore';
 import clsx from 'clsx';
 
 function ViewOptions() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  
+
+  const hasFounderAccess = useFoundersStore(selectHasFounderAccess);
   const isWriterMode = useSettingsStore((state) => state.isWriterMode);
   const isZenMode = useSettingsStore((state) => state.isZenMode);
   const isCompactMode = useSettingsStore((state) => state.isCompactMode);
   const isWideMode = useSettingsStore((state) => state.isWideMode);
-  
+  const isOutlinePanelOpen = useSettingsStore(
+    (state) => state.isOutlinePanelOpen,
+  );
+
   const toggleWriterMode = useSettingsStore((state) => state.toggleWriterMode);
   const toggleZenMode = useSettingsStore((state) => state.toggleZenMode);
-  const toggleCompactMode = useSettingsStore((state) => state.toggleCompactMode);
+  const toggleCompactMode = useSettingsStore(
+    (state) => state.toggleCompactMode,
+  );
   const toggleWideMode = useSettingsStore((state) => state.toggleWideMode);
+  const toggleOutlinePanel = useSettingsStore(
+    (state) => state.toggleOutlinePanel,
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -42,12 +63,15 @@ function ViewOptions() {
     };
   }, [isOpen]);
 
-  const toggleButtonClass = (active) =>
+  const toggleButtonClass = (active, disabled = false) =>
     clsx(
       'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30',
+      disabled && 'cursor-not-allowed opacity-70',
       active
         ? 'bg-accent/10 text-accent font-medium'
-        : 'text-muted hover:bg-line/50 hover:text-ink'
+        : disabled
+          ? 'text-muted/70'
+          : 'text-muted hover:bg-line/50 hover:text-ink',
     );
 
   return (
@@ -61,7 +85,7 @@ function ViewOptions() {
           'rounded-lg p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30',
           isOpen || isWriterMode || isZenMode || isCompactMode || isWideMode
             ? 'bg-accent/10 text-accent'
-            : 'text-muted hover:bg-line/50 hover:text-ink'
+            : 'text-muted hover:bg-line/50 hover:text-ink',
         )}
       >
         <Settings2 size={18} />
@@ -104,6 +128,31 @@ function ViewOptions() {
             >
               {isZenMode ? <Minimize size={16} /> : <Maximize size={16} />}
               <span>Zen Mode</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!hasFounderAccess) {
+                  return;
+                }
+
+                toggleOutlinePanel();
+              }}
+              aria-disabled={!hasFounderAccess}
+              className={toggleButtonClass(
+                hasFounderAccess && isOutlinePanelOpen,
+                !hasFounderAccess,
+              )}
+            >
+              <List size={16} />
+              <span className="flex-1">Outline Panel</span>
+              {hasFounderAccess ? (
+                <span className="rounded-full bg-line/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+                  Founder
+                </span>
+              ) : (
+                <Lock size={14} className="text-muted/80" />
+              )}
             </button>
           </div>
         </div>

@@ -10,6 +10,7 @@ import { formatIcons } from './export/formatIcons';
 import { useExportModalController } from './export/useExportModalController';
 import { useExportStore } from '../store/useExportStore';
 import { useNotesStore } from '../store/useNotesStore';
+import { useFoundersStore } from '../store/useFoundersStore';
 import { getExportFormats } from '../utils/exportFormats';
 import { useOverlayFocus } from '../hooks/useOverlayFocus';
 
@@ -34,6 +35,7 @@ function ExportModal() {
   const [exportError, setExportError] = useState(null);
   const titleId = useId();
   const descriptionId = useId();
+  const hasEarlyAccess = useFoundersStore((state) => state.hasEarlyAccess);
   const formats = getExportFormats();
   const currentFormat = formats.find((format) => format.id === selectedFormat);
   const selectedNote = useMemo(
@@ -45,6 +47,11 @@ function ExportModal() {
   const groupedFormats = useMemo(
     () =>
       formats.reduce((accumulator, format) => {
+        // Gate Premium formats behind hasEarlyAccess
+        if (['pdf', 'docx', 'epub'].includes(format.id) && !hasEarlyAccess) {
+          return accumulator;
+        }
+
         if (!accumulator[format.category]) {
           accumulator[format.category] = [];
         }
@@ -52,7 +59,7 @@ function ExportModal() {
         accumulator[format.category].push(format);
         return accumulator;
       }, {}),
-    [formats],
+    [formats, hasEarlyAccess],
   );
 
   const { handleExport, modalRef } = useExportModalController({

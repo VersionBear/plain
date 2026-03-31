@@ -1,5 +1,9 @@
-import { Image, Moon, Settings2, Sun, ChevronRight } from 'lucide-react';
+import { Image, Moon, Settings2, Sun, ChevronRight, Lock } from 'lucide-react';
 import clsx from 'clsx';
+import {
+  selectHasProAccess,
+  useFoundersStore,
+} from '../../store/useFoundersStore';
 
 function Toggle({ enabled, label, onToggle }) {
   return (
@@ -34,6 +38,8 @@ function FormatSettingsPanel({
   setShowSettings,
   updateSettings,
 }) {
+  const hasProAccess = useFoundersStore(selectHasProAccess);
+
   return (
     <>
       <div className="flex shrink-0 items-center gap-3 border-b border-line bg-canvas/30 px-4 py-3 md:hidden">
@@ -189,6 +195,100 @@ function FormatSettingsPanel({
                   />
                 </div>
               ) : null}
+
+              {selectedFormat === 'pdf' ? (
+                <div className="rounded-xl bg-canvas/30 p-3">
+                  <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <span className="text-sm text-ink">Page Layout</span>
+                      <p className="text-xs text-muted">
+                        Choose the paper size and orientation for PDF export.
+                      </p>
+                    </div>
+                    <span
+                      className={clsx(
+                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium',
+                        hasProAccess
+                          ? 'bg-accent/10 text-accent'
+                          : 'bg-line/40 text-muted',
+                      )}
+                    >
+                      {!hasProAccess ? <Lock size={12} /> : null}
+                      {hasProAccess ? 'Pro unlocked' : 'Pro feature'}
+                    </span>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-[0.12em] text-muted/80">
+                        Paper size
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['a4', 'letter'].map((pageFormat) => (
+                          <button
+                            key={pageFormat}
+                            type="button"
+                            disabled={!hasProAccess}
+                            onClick={() =>
+                              setFormatSetting('pdf', 'pageFormat', pageFormat)
+                            }
+                            className={clsx(
+                              'rounded-xl border px-3 py-2 text-sm transition-colors',
+                              getFormatSetting('pageFormat', 'a4') ===
+                                pageFormat
+                                ? 'border-accent bg-accent/10 text-accent'
+                                : 'border-line bg-canvas text-ink hover:border-line/80',
+                              !hasProAccess &&
+                                'cursor-not-allowed border-line/70 text-muted/70 hover:border-line/70',
+                            )}
+                          >
+                            {pageFormat.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-[0.12em] text-muted/80">
+                        Orientation
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['portrait', 'landscape'].map((orientation) => (
+                          <button
+                            key={orientation}
+                            type="button"
+                            disabled={!hasProAccess}
+                            onClick={() =>
+                              setFormatSetting(
+                                'pdf',
+                                'orientation',
+                                orientation,
+                              )
+                            }
+                            className={clsx(
+                              'rounded-xl border px-3 py-2 text-sm capitalize transition-colors',
+                              getFormatSetting('orientation', 'portrait') ===
+                                orientation
+                                ? 'border-accent bg-accent/10 text-accent'
+                                : 'border-line bg-canvas text-ink hover:border-line/80',
+                              !hasProAccess &&
+                                'cursor-not-allowed border-line/70 text-muted/70 hover:border-line/70',
+                            )}
+                          >
+                            {orientation}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {!hasProAccess ? (
+                    <p className="mt-3 text-xs leading-relaxed text-muted">
+                      Upgrade to Pro to tune PDF layout before exporting.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -212,6 +312,18 @@ function FormatSettingsPanel({
                     ) : null}
                     {['png', 'jpeg', 'pdf'].includes(selectedFormat) ? (
                       <li>Scale: {getFormatSetting('scale', 2)}x</li>
+                    ) : null}
+                    {selectedFormat === 'pdf' ? (
+                      <>
+                        <li>
+                          Paper size:{' '}
+                          {getFormatSetting('pageFormat', 'a4').toUpperCase()}
+                        </li>
+                        <li className="capitalize">
+                          Orientation:{' '}
+                          {getFormatSetting('orientation', 'portrait')}
+                        </li>
+                      </>
                     ) : null}
                   </ul>
                 </div>

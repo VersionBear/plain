@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  Check,
   CheckCircle2,
   KeyRound,
   LoaderCircle,
@@ -8,8 +9,26 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { useFoundersStore } from '../store/useFoundersStore';
+import {
+  selectHasFounderAccess,
+  selectPlanTier,
+  useFoundersStore,
+} from '../store/useFoundersStore';
 import { useOverlayFocus } from '../hooks/useOverlayFocus';
+import { PLAN_TIERS } from '../utils/planFeatures';
+
+const proFeatures = [
+  'Premium themes and palettes',
+  'Writing insights with word count, characters, and read time',
+  'Advanced PDF paper size and orientation controls',
+  'PDF plus beta DOCX and EPUB export options',
+];
+
+const founderFeatures = [
+  'Everything in Pro',
+  'Interactive outline panel for long notes',
+  'Founder-only Rose Paper, Midnight, Aurora Noir, and Porcelain Ink themes',
+];
 
 function formatVerificationTimestamp(timestamp) {
   if (!timestamp) {
@@ -26,19 +45,24 @@ function formatVerificationTimestamp(timestamp) {
 }
 
 function FoundersRedeemModal({ isOpen, onClose }) {
+  const plainProPurchaseUrl = 'https://versionbear.gumroad.com/l/plain-pro';
   const foundersPackPurchaseUrl =
     'https://versionbear.gumroad.com/l/plain-founder';
+  const productName =
+    useFoundersStore((state) => state.productName) || 'Premium';
   const customerEmail = useFoundersStore((state) => state.customerEmail);
   const customerName = useFoundersStore((state) => state.customerName);
   const errorMessage = useFoundersStore((state) => state.errorMessage);
   const isFoundersPackActive = useFoundersStore(
     (state) => state.isFoundersPackActive,
   );
+  const hasFounderAccess = useFoundersStore(selectHasFounderAccess);
   const isSubmitting = useFoundersStore((state) => state.isSubmitting);
   const lastVerifiedAt = useFoundersStore((state) => state.lastVerifiedAt);
   const licenseKey = useFoundersStore((state) => state.licenseKey);
   const maskedLicenseKey = useFoundersStore((state) => state.maskedLicenseKey);
   const orderNumber = useFoundersStore((state) => state.orderNumber);
+  const planTier = useFoundersStore(selectPlanTier);
   const clearError = useFoundersStore((state) => state.clearError);
   const clearFoundersAccess = useFoundersStore(
     (state) => state.clearFoundersAccess,
@@ -114,9 +138,9 @@ function FoundersRedeemModal({ isOpen, onClose }) {
         aria-modal="true"
         aria-labelledby="founders-redeem-title"
         tabIndex={-1}
-        className="relative z-10 w-full max-w-lg animate-slide-up rounded-[28px] border border-line bg-panel p-6 shadow-2xl"
+        className="relative z-10 flex w-full max-w-lg max-h-[90vh] flex-col animate-slide-up overflow-hidden rounded-[28px] border border-line bg-panel shadow-2xl"
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line/50 p-6 pb-5">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-amber-500/10 p-2.5 text-amber-600 dark:text-amber-300">
               <Sparkles size={18} />
@@ -127,11 +151,11 @@ function FoundersRedeemModal({ isOpen, onClose }) {
                 id="founders-redeem-title"
                 className="text-lg font-semibold tracking-tight text-ink"
               >
-                Founders Pack
+                {isFoundersPackActive ? productName : 'Activate License'}
               </h2>
               <p className="mt-1 text-sm leading-relaxed text-muted">
-                Redeem your Gumroad license to unlock early-access builds on
-                this device.
+                Redeem your Gumroad license to unlock Pro or Founders features
+                on this device.
               </p>
             </div>
           </div>
@@ -140,15 +164,16 @@ function FoundersRedeemModal({ isOpen, onClose }) {
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            aria-label="Close founders pack dialog"
-            className="rounded-lg p-1 text-muted transition-colors hover:bg-line/40 hover:text-ink disabled:opacity-50"
+            aria-label="Close Plain Pro dialog"
+            className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-line/40 hover:text-ink disabled:opacity-50"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-line/80 bg-elevated/70 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="rounded-2xl border border-line/80 bg-elevated/70 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               {isFoundersPackActive ? (
                 <>
@@ -157,7 +182,7 @@ function FoundersRedeemModal({ isOpen, onClose }) {
                   </span>
                   <div>
                     <p className="text-sm font-medium text-ink">
-                      Early access unlocked
+                      {productName} unlocked
                     </p>
                     <p className="text-xs text-muted">
                       Verified {verificationLabel}
@@ -233,125 +258,208 @@ function FoundersRedeemModal({ isOpen, onClose }) {
             </div>
           ) : (
             <p className="mt-4 text-xs leading-relaxed text-muted">
-              Need a license? Buy the Founders Pack at{' '}
+              Need a license? Buy{' '}
+              <a
+                href={plainProPurchaseUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-ink underline decoration-line/80 underline-offset-2 transition-colors hover:text-accent"
+              >
+                Plain Pro
+              </a>{' '}
+              or the{' '}
               <a
                 href={foundersPackPurchaseUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="font-medium text-ink underline decoration-line/80 underline-offset-2 transition-colors hover:text-accent"
               >
-                versionbear.gumroad.com/l/plain-founder
+                Founders Pack
               </a>
               .
             </p>
           )}
         </div>
 
-        {errorMessage ? (
-          <div className="bg-red-500/8 mt-4 rounded-2xl border border-red-500/20 px-4 py-3 text-sm text-red-600 dark:text-red-300">
-            {errorMessage}
-          </div>
-        ) : null}
-
-        {!isFoundersPackActive || isEditingKey ? (
-          <form className="mt-5 space-y-3" onSubmit={handleRedeem}>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-ink">
-                Gumroad license key
+        <div className="mt-4 flex flex-col gap-3">
+          <div
+            className={
+              planTier === PLAN_TIERS.PRO || planTier === PLAN_TIERS.FOUNDER
+                ? 'rounded-2xl border border-accent/30 bg-accent/5 p-4'
+                : 'rounded-2xl border border-line/80 bg-elevated/50 p-4'
+            }
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-ink">Plain Pro</p>
+                <p className="mt-1 text-xs text-muted">
+                  Practical upgrades for writing and export.
+                </p>
+              </div>
+              <span className="rounded-full bg-line/40 px-2.5 py-1 text-[11px] font-medium text-muted">
+                {planTier === PLAN_TIERS.PRO
+                  ? 'Active'
+                  : hasFounderAccess
+                    ? 'Included'
+                    : 'Upgrade'}
               </span>
-              <input
-                type="text"
-                value={licenseInput}
-                onChange={(event) => setLicenseInput(event.target.value)}
-                placeholder="Paste your license key"
-                autoComplete="off"
-                spellCheck={false}
-                disabled={isSubmitting}
-                className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-60"
-              />
-            </label>
+            </div>
 
+            <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+              {proFeatures.map((feature) => (
+                <li
+                  key={feature}
+                  className="flex items-start gap-2 text-sm text-muted"
+                >
+                  <Check size={14} className="mt-0.5 shrink-0 text-accent" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div
+            className={
+              planTier === PLAN_TIERS.FOUNDER
+                ? 'rounded-2xl border border-amber-400/30 bg-amber-500/5 p-4'
+                : 'rounded-2xl border border-line/80 bg-elevated/50 p-4'
+            }
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-ink">Founders Pack</p>
+                <p className="mt-1 text-xs text-muted">
+                  Adds founder-only tools on top of Pro.
+                </p>
+              </div>
+              <span className="rounded-full bg-line/40 px-2.5 py-1 text-[11px] font-medium text-muted">
+                {planTier === PLAN_TIERS.FOUNDER ? 'Active' : 'Founder'}
+              </span>
+            </div>
+
+            <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+              {founderFeatures.map((feature) => (
+                <li
+                  key={feature}
+                  className="flex items-start gap-2 text-sm text-muted"
+                >
+                  <Check
+                    size={14}
+                    className="mt-0.5 shrink-0 text-amber-500 dark:text-amber-300"
+                  />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        </div>
+
+        <div className="shrink-0 border-t border-line/50 bg-panel p-6">
+          {errorMessage ? (
+            <div className="mb-4 rounded-2xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-600 dark:text-red-300">
+              {errorMessage}
+            </div>
+          ) : null}
+
+          {!isFoundersPackActive || isEditingKey ? (
+            <form className="space-y-3" onSubmit={handleRedeem}>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-ink">
+                  Gumroad license key
+                </span>
+                <input
+                  type="text"
+                  value={licenseInput}
+                  onChange={(event) => setLicenseInput(event.target.value)}
+                  placeholder="Paste your license key"
+                  autoComplete="off"
+                  spellCheck={false}
+                  disabled={isSubmitting}
+                  className="w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:opacity-60"
+                />
+              </label>
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs leading-relaxed text-muted">
+                  Requires internet to verify.
+                </p>
+
+                <div className="flex items-center gap-2">
+                  {isFoundersPackActive ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLicenseInput(licenseKey);
+                        setIsEditingKey(false);
+                        clearError();
+                      }}
+                      className="rounded-xl px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-line/35 hover:text-ink"
+                    >
+                      Cancel
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !licenseInput.trim()}
+                    className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2 text-sm font-medium text-canvas transition-all hover:opacity-90 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <LoaderCircle size={15} className="animate-spin" />
+                    ) : null}
+                    {isFoundersPackActive ? 'Save and verify' : 'Redeem'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs leading-relaxed text-muted">
-                An internet connection is only needed while verifying the key
-                with Gumroad.
+                Key stays on this device.
               </p>
 
-              <div className="flex items-center gap-2">
-                {isFoundersPackActive ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  disabled={isSubmitting}
+                  className="rounded-xl px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-line/35 hover:text-ink disabled:opacity-50"
+                >
+                  Remove key
+                </button>
+                {hasStoredLicenseKey ? (
+                  <button
+                    type="button"
+                    onClick={handleRefresh}
+                    disabled={isSubmitting}
+                    className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2 text-sm font-medium text-canvas transition-all hover:opacity-90 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <LoaderCircle size={15} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={15} />
+                    )}
+                    Check again
+                  </button>
+                ) : (
                   <button
                     type="button"
                     onClick={() => {
-                      setLicenseInput(licenseKey);
-                      setIsEditingKey(false);
+                      setLicenseInput('');
+                      setIsEditingKey(true);
                       clearError();
                     }}
-                    className="rounded-xl px-4 py-2 text-sm text-muted transition-colors hover:bg-line/35 hover:text-ink"
+                    className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2 text-sm font-medium text-canvas transition-all hover:opacity-90"
                   >
-                    Cancel
+                    <RefreshCw size={15} />
+                    Verify again
                   </button>
-                ) : null}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2 text-sm font-medium text-canvas transition-opacity hover:opacity-90 disabled:opacity-60"
-                >
-                  {isSubmitting ? (
-                    <LoaderCircle size={15} className="animate-spin" />
-                  ) : null}
-                  {isFoundersPackActive ? 'Save and verify' : 'Redeem'}
-                </button>
+                )}
               </div>
             </div>
-          </form>
-        ) : (
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs leading-relaxed text-muted">
-              Early access stays enabled on this device. Re-enter your Gumroad
-              key any time you want to verify it again.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleClear}
-                disabled={isSubmitting}
-                className="rounded-xl px-4 py-2 text-sm text-muted transition-colors hover:bg-line/35 hover:text-ink disabled:opacity-50"
-              >
-                Remove from this device
-              </button>
-              {hasStoredLicenseKey ? (
-                <button
-                  type="button"
-                  onClick={handleRefresh}
-                  disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2 text-sm font-medium text-canvas transition-opacity hover:opacity-90 disabled:opacity-60"
-                >
-                  {isSubmitting ? (
-                    <LoaderCircle size={15} className="animate-spin" />
-                  ) : (
-                    <RefreshCw size={15} />
-                  )}
-                  Check again
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLicenseInput('');
-                    setIsEditingKey(true);
-                    clearError();
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2 text-sm font-medium text-canvas transition-opacity hover:opacity-90"
-                >
-                  <RefreshCw size={15} />
-                  Verify again
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>,
     document.body,

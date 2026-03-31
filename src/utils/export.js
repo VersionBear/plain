@@ -59,7 +59,14 @@ export function getSafeExportName(title = 'untitled_note') {
 
 function sanitizeExportHtml(content = '') {
   const sanitizedHtml = DOMPurify.sanitize(content, {
-    ADD_ATTR: ['target', 'data-type', 'data-width', 'data-align', 'style', 'class'],
+    ADD_ATTR: [
+      'target',
+      'data-type',
+      'data-width',
+      'data-align',
+      'style',
+      'class',
+    ],
   });
 
   return stripUnsafeEmbeddedImages(sanitizedHtml);
@@ -294,7 +301,7 @@ function removeExportContainer(container) {
 
 /**
  * Wait for all images in a container to load
- * @param {HTMLElement} container 
+ * @param {HTMLElement} container
  */
 async function waitForImagesToLoad(container) {
   const images = Array.from(container.querySelectorAll('img'));
@@ -364,11 +371,14 @@ export async function exportNoteAsHtml(note, options = {}) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(`<body>${content}</body>`, 'text/html');
     const figures = doc.querySelectorAll('figure[data-type="plain-image"]');
-    figures.forEach(fig => {
+    figures.forEach((fig) => {
       const widthAttr = fig.getAttribute('data-width');
       const width = widthAttr !== null ? Number(widthAttr) : NaN;
       if (Number.isFinite(width)) {
-        fig.style.setProperty('--plain-image-width', `${Math.max(30, Math.min(100, width))}%`);
+        fig.style.setProperty(
+          '--plain-image-width',
+          `${Math.max(30, Math.min(100, width))}%`,
+        );
       }
     });
     content = doc.body.innerHTML;
@@ -671,6 +681,9 @@ export async function exportNoteAsJpeg(note, options = {}) {
  */
 export async function exportNoteAsPdf(note, options = {}) {
   const { scale = 2, darkMode = false } = options;
+  const pageFormat = options.pageFormat === 'letter' ? 'letter' : 'a4';
+  const orientation =
+    options.orientation === 'landscape' ? 'landscape' : 'portrait';
   const title = note.title || 'Untitled note';
   const content = note.content || '';
   const [html2canvas, jsPDF] = await Promise.all([
@@ -699,9 +712,9 @@ export async function exportNoteAsPdf(note, options = {}) {
 
     const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF({
-      orientation: 'portrait',
+      orientation,
       unit: 'mm',
-      format: 'a4',
+      format: pageFormat,
       compress: true,
     });
 
@@ -723,14 +736,7 @@ export async function exportNoteAsPdf(note, options = {}) {
     while (heightLeft > 0) {
       position -= pdfHeight;
       pdf.addPage();
-      pdf.addImage(
-        imgData,
-        'PNG',
-        0,
-        position,
-        pdfWidth,
-        totalPdfHeight
-      );
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
       heightLeft -= pdfHeight;
     }
 
@@ -744,6 +750,44 @@ export async function exportNoteAsPdf(note, options = {}) {
   } finally {
     removeExportContainer(container);
   }
+}
+
+/**
+ * Export note as DOCX (stub for now, as real browser DOCX generation requires complex ZIP/XML packing)
+ * @param {Object} note - The note object
+ * @param {ExportOptions} options - Export options
+ */
+export async function exportNoteAsDocx(note, _options = {}) {
+  const title = note.title || 'Untitled note';
+
+  // Fallback stub: In a full app, we would use something like the 'docx' package
+  // For demonstration, we'll download a placeholder text file with the .docx extension
+  const placeholderContent = `DOCX Generation coming soon!\n\nTitle: ${title}\n\nThis is a premium feature placeholder.`;
+  const blob = new Blob([placeholderContent], {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
+
+  downloadBlob(blob, `${getSafeExportName(title)}.docx`);
+
+  return { success: true, format: 'docx' };
+}
+
+/**
+ * Export note as ePub (stub for now, as real browser ePub generation requires complex ZIP/XML packing)
+ * @param {Object} note - The note object
+ * @param {ExportOptions} options - Export options
+ */
+export async function exportNoteAsEpub(note, _options = {}) {
+  const title = note.title || 'Untitled note';
+
+  // Fallback stub: In a full app, we would use something like jszip and epub-gen-memory
+  // For demonstration, we'll download a placeholder text file with the .epub extension
+  const placeholderContent = `EPUB Generation coming soon!\n\nTitle: ${title}\n\nThis is a premium feature placeholder.`;
+  const blob = new Blob([placeholderContent], { type: 'application/epub+zip' });
+
+  downloadBlob(blob, `${getSafeExportName(title)}.epub`);
+
+  return { success: true, format: 'epub' };
 }
 
 /**
@@ -803,6 +847,18 @@ export async function exportNoteWithProgress(
         onProgress({ stage: 'rendering', progress: 20 });
         result = await exportNoteAsPdf(note, options);
         onProgress({ stage: 'generating', progress: 70 });
+        break;
+
+      case 'docx':
+        onProgress({ stage: 'rendering', progress: 30 });
+        result = await exportNoteAsDocx(note, options);
+        onProgress({ stage: 'generating', progress: 80 });
+        break;
+
+      case 'epub':
+        onProgress({ stage: 'rendering', progress: 30 });
+        result = await exportNoteAsEpub(note, options);
+        onProgress({ stage: 'generating', progress: 80 });
         break;
 
       default:

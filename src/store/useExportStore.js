@@ -11,7 +11,12 @@ const defaultSettings = {
     html: { darkMode: false },
     png: { scale: 2, darkMode: false },
     jpeg: { scale: 2, darkMode: false, quality: 0.95 },
-    pdf: { scale: 2, darkMode: false },
+    pdf: {
+      scale: 2,
+      darkMode: false,
+      pageFormat: 'a4',
+      orientation: 'portrait',
+    },
   },
 };
 

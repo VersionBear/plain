@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
+import { selectPlanTier, useFoundersStore } from '../store/useFoundersStore';
+import {
+  isDarkTheme,
+  isThemeValue,
+  resolveThemeForPlan,
+  THEME_CLASSES,
+} from '../utils/themes';
 
 const storageKey = 'plain-theme';
-
-function isThemeValue(value) {
-  return value === 'light' || value === 'dark';
-}
 
 function readStoredTheme() {
   if (typeof window === 'undefined') {
@@ -26,7 +29,8 @@ function getSystemTheme() {
 }
 
 function getInitialTheme() {
-  return readStoredTheme() || getSystemTheme();
+  const planTier = selectPlanTier(useFoundersStore.getState());
+  return resolveThemeForPlan(readStoredTheme() || getSystemTheme(), planTier);
 }
 
 function applyTheme(theme) {
@@ -36,12 +40,17 @@ function applyTheme(theme) {
 
   const root = document.documentElement;
   const body = document.body;
-  const isDark = theme === 'dark';
+  const isDark = isDarkTheme(theme);
   const themeColor = isDark ? '#000000' : '#ffffff';
 
-  root.classList.toggle('dark', isDark);
+  root.classList.remove(...THEME_CLASSES);
+
+  if (theme !== 'light') {
+    root.classList.add(theme);
+  }
+
   root.dataset.theme = theme;
-  root.style.colorScheme = theme;
+  root.style.colorScheme = isDark ? 'dark' : 'light';
 
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
   if (themeColorMeta) {
@@ -52,27 +61,39 @@ function applyTheme(theme) {
     return;
   }
 
-  body.classList.toggle('dark', isDark);
+  body.classList.remove(...THEME_CLASSES);
+  if (theme !== 'light') {
+    body.classList.add(theme);
+  }
+
   body.dataset.theme = theme;
-  body.style.colorScheme = theme;
+  body.style.colorScheme = isDark ? 'dark' : 'light';
 }
 
 export function useTheme() {
+  const planTier = useFoundersStore(selectPlanTier);
   const [theme, setTheme] = useState(getInitialTheme);
   const [hasStoredPreference, setHasStoredPreference] = useState(() =>
     Boolean(readStoredTheme()),
   );
 
   useEffect(() => {
-    applyTheme(theme);
+    const nextTheme = resolveThemeForPlan(theme, planTier) || 'light';
+
+    if (nextTheme !== theme) {
+      setTheme(nextTheme);
+      return;
+    }
+
+    applyTheme(nextTheme);
 
     if (hasStoredPreference) {
-      localStorage.setItem(storageKey, theme);
+      localStorage.setItem(storageKey, nextTheme);
       return;
     }
 
     localStorage.removeItem(storageKey);
-  }, [hasStoredPreference, theme]);
+  }, [hasStoredPreference, planTier, theme]);
 
   useEffect(() => {
     if (hasStoredPreference) {
@@ -88,6 +109,16 @@ export function useTheme() {
 
   return {
     theme,
+    setTheme: (newTheme) => {
+      const nextTheme = resolveThemeForPlan(newTheme, planTier);
+
+      if (!nextTheme) {
+        return;
+      }
+
+      setHasStoredPreference(true);
+      setTheme(nextTheme);
+    },
     toggleTheme: () => {
       setHasStoredPreference(true);
       setTheme((currentTheme) => (currentTheme === 'dark' ? 'light' : 'dark'));

@@ -18,6 +18,10 @@ import {
   sortTrashedNotes,
 } from '../utils/notes';
 import {
+  createWelcomeNote,
+  shouldSeedWelcomeNote,
+} from '../utils/welcomeNote';
+import {
   createNoteMutation,
   deleteNotePermanentlyMutation,
   deleteTagMutation,
@@ -203,6 +207,29 @@ export const useNotesStore = create((set, get) => ({
         pendingLegacyImport = null;
         library = await activeStorageAdapter.loadLibrary();
         setSyncError(set, error);
+      }
+
+      if (shouldSeedWelcomeNote(library, pendingLegacyImport)) {
+        const welcomeNote = createWelcomeNote();
+        const seededIndex = {
+          ...library.index,
+          activeSection: 'notes',
+          selectedNoteId: welcomeNote.id,
+        };
+
+        try {
+          await activeStorageAdapter.saveNote(welcomeNote);
+          await activeStorageAdapter.saveIndex(seededIndex);
+          library = {
+            ...library,
+            notes: [welcomeNote],
+            trashedNotes: [],
+            index: seededIndex,
+          };
+        } catch (error) {
+          setSyncError(set, error);
+          library = await activeStorageAdapter.loadLibrary().catch(() => library);
+        }
       }
 
       const normalizedState = normalizeLoadedState(
