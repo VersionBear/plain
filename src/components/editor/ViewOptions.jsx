@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSettingsStore } from '../store/useSettingsStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import { Settings2, Type, List, Maximize2, Minimize, Maximize } from 'lucide-react';
 import clsx from 'clsx';
 
