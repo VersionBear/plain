@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSettingsStore } from '../store/useSettingsStore';
 import clsx from 'clsx';
 import {
   AlertCircle,
@@ -50,6 +51,7 @@ function Sidebar({
   const handleCreateNote = onCreateNote ?? createNote;
   const currentSectionCount =
     activeSection === 'trash' ? trashedNotesCount : activeNotesCount;
+  const isZenMode = useSettingsStore((state) => state.isZenMode);
   const currentYear = new Date().getFullYear();
   const docsUrl = 'https://docs.plain.versionbear.com/';
   const [isStorageExpanded, setIsStorageExpanded] = useState(false);
@@ -410,7 +412,9 @@ function Sidebar({
           'hidden shrink-0 flex-col border-r border-line bg-panel transition-all duration-300 ease-in-out md:flex',
           isCollapsed
             ? 'w-0 overflow-hidden opacity-0'
-            : 'w-[320px] opacity-100 lg:w-[360px]',
+            : isZenMode
+              ? 'absolute z-40 h-full w-[320px] -translate-x-[310px] opacity-0 hover:translate-x-0 hover:opacity-100 lg:w-[360px] lg:-translate-x-[350px]'
+              : 'w-[320px] opacity-100 lg:w-[360px]',
         )}
       >
         {sidebarContent}

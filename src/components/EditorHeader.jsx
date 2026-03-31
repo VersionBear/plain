@@ -3,6 +3,7 @@ import { useNotesStore } from '../store/useNotesStore';
 import { useExportStore } from '../store/useExportStore';
 import { formatEditorMeta } from '../utils/date';
 import ConfirmDialog from './common/ConfirmDialog';
+import ViewOptions from './editor/ViewOptions';
 import {
   PanelLeftClose,
   PanelLeftOpen,
@@ -11,7 +12,6 @@ import {
   Trash2,
   ArchiveRestore,
   Download,
-  Type,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -29,15 +29,23 @@ function EditorHeader({
   );
   const togglePinned = useNotesStore((state) => state.togglePinned);
   const openExportModal = useExportStore((state) => state.openExportModal);
-  const isWriterMode = useSettingsStore((state) => state.isWriterMode);
-  const toggleWriterMode = useSettingsStore((state) => state.toggleWriterMode);
+  const isZenMode = useSettingsStore((state) => state.isZenMode);
   const meta = note ? formatEditorMeta(note.createdAt, note.updatedAt) : null;
   const exportButtonRef = useRef(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   return (
     <>
-      <header className="sticky top-0 z-20 flex w-full items-center justify-between border-b border-line bg-canvas/80 px-4 py-3 backdrop-blur-md md:px-6 md:py-4">
+      <div className={clsx('z-20 w-full', isZenMode ? 'group absolute left-0 right-0 top-0' : 'sticky top-0')}>
+        <div className={clsx('absolute inset-x-0 top-0 h-4', isZenMode ? 'block' : 'hidden')} />
+        <header
+          className={clsx(
+            'flex w-full items-center justify-between border-b border-line bg-canvas/80 px-4 py-3 backdrop-blur-md transition-all duration-300 md:px-6 md:py-4',
+            isZenMode
+              ? '-translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100'
+              : 'translate-y-0 opacity-100'
+          )}
+        >
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -68,26 +76,13 @@ function EditorHeader({
           <div className="flex items-center gap-1">
             {activeSection === 'notes' ? (
               <>
-                <button
-                type="button"
-                title="Toggle Writer Mode"
-                aria-label="Toggle Writer Mode"
-                onClick={toggleWriterMode}
-                className={clsx(
-                  'rounded-lg p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30',
-                  isWriterMode
-                    ? 'bg-accent/10 text-accent'
-                    : 'text-muted hover:bg-line/50 hover:text-ink',
-                )}
-              >
-                <Type size={18} />
-              </button>
+                <ViewOptions />
 
-              <button
-                ref={exportButtonRef}
-                type="button"
-                title="Export note"
-                aria-label="Export note"
+                <button
+                  ref={exportButtonRef}
+                  type="button"
+                  title="Export note"
+                  aria-label="Export note"
                 onClick={() => openExportModal(note.id)}
                 className="rounded-lg p-2 text-muted transition-colors hover:bg-line/50 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
               >
@@ -142,7 +137,8 @@ function EditorHeader({
           )}
         </div>
         ) : null}
-      </header>
+        </header>
+      </div>
       <ConfirmDialog
         isOpen={isDeleteConfirmOpen}
         title="Delete note permanently?"

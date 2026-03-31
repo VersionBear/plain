@@ -4,6 +4,7 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import EmptyEditorState from './EmptyEditorState';
 import EditorHeader from './EditorHeader';
 import NoteEditor from './NoteEditor';
+import clsx from 'clsx';
 
 function EditorPane({
   totalNotes,
@@ -16,6 +17,7 @@ function EditorPane({
   const trashedNotes = useNotesStore((state) => state.trashedNotes);
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
   const isWriterMode = useSettingsStore((state) => state.isWriterMode);
+  const isWideMode = useSettingsStore((state) => state.isWideMode);
   const currentNotes = activeSection === 'trash' ? trashedNotes : notes;
   const note = useMemo(
     () => currentNotes.find((entry) => entry.id === selectedNoteId) ?? null,
@@ -50,9 +52,11 @@ function EditorPane({
       />
       <div className="note-print-shell group flex w-full flex-1 justify-center overflow-y-auto">
         <div
-          className={`note-print-frame w-full max-w-4xl px-6 py-8 sm:px-12 sm:py-12 lg:py-20 ${
+          className={clsx(
+            'note-print-frame w-full px-6 py-8 sm:px-12 sm:py-12 lg:py-20',
+            isWideMode ? 'max-w-6xl' : 'max-w-4xl',
             isWriterMode ? 'font-serif' : ''
-          }`}
+          )}
         >
           <NoteEditor note={note} isReadOnly={activeSection === 'trash'} />
         </div>

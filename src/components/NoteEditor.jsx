@@ -8,9 +8,12 @@ import LinkPopover from './editor/LinkPopover';
 import LinkTooltip from './editor/LinkTooltip';
 import { isUrlLikeSelection, normalizeUrl } from './editor/linkUtils';
 import { useNotesStore } from '../store/useNotesStore';
+import { useSettingsStore } from '../store/useSettingsStore';
+import clsx from 'clsx';
 
 function NoteEditor({ note, isReadOnly = false }) {
   const updateNote = useNotesStore((state) => state.updateNote);
+  const isCompactMode = useSettingsStore((state) => state.isCompactMode);
   const titleSaveTimerRef = useRef(null);
   const contentSaveTimerRef = useRef(null);
   const pendingTitleRef = useRef(note.title || '');
@@ -89,8 +92,10 @@ function NoteEditor({ note, isReadOnly = false }) {
     },
     editorProps: {
       attributes: {
-        class:
+        class: clsx(
           'prose sm:prose-lg dark:prose-invert focus:outline-none max-w-none min-h-[50vh]',
+          isCompactMode ? 'prose-compact' : ''
+        ),
       },
       handlePaste(view, event) {
         const files = Array.from(event.clipboardData?.files ?? []).filter(
