@@ -11,8 +11,10 @@ import {
   Trash2,
   ArchiveRestore,
   Download,
+  Type,
 } from 'lucide-react';
 import clsx from 'clsx';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 function EditorHeader({
   note,
@@ -27,7 +29,9 @@ function EditorHeader({
   );
   const togglePinned = useNotesStore((state) => state.togglePinned);
   const openExportModal = useExportStore((state) => state.openExportModal);
-  const meta = formatEditorMeta(note.createdAt, note.updatedAt);
+  const isWriterMode = useSettingsStore((state) => state.isWriterMode);
+  const toggleWriterMode = useSettingsStore((state) => state.toggleWriterMode);
+  const meta = note ? formatEditorMeta(note.createdAt, note.updatedAt) : null;
   const exportButtonRef = useRef(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
@@ -50,17 +54,35 @@ function EditorHeader({
 
           <div className="flex flex-col">
             <span className="text-xs font-medium text-muted">
-              {activeSection === 'trash' ? 'In Trash' : 'Editing Note'}
+              {activeSection === 'trash' ? 'In Trash' : 'Notes'}
             </span>
-            <span className="text-[10px] text-muted/70">
-              Updated {meta.updated}
-            </span>
+            {meta ? (
+              <span className="text-[10px] text-muted/70">
+                Updated {meta.updated}
+              </span>
+            ) : null}
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          {activeSection === 'notes' ? (
-            <>
+        {note ? (
+          <div className="flex items-center gap-1">
+            {activeSection === 'notes' ? (
+              <>
+                <button
+                type="button"
+                title="Toggle Writer Mode"
+                aria-label="Toggle Writer Mode"
+                onClick={toggleWriterMode}
+                className={clsx(
+                  'rounded-lg p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30',
+                  isWriterMode
+                    ? 'bg-accent/10 text-accent'
+                    : 'text-muted hover:bg-line/50 hover:text-ink',
+                )}
+              >
+                <Type size={18} />
+              </button>
+
               <button
                 ref={exportButtonRef}
                 type="button"
@@ -119,6 +141,7 @@ function EditorHeader({
             </>
           )}
         </div>
+        ) : null}
       </header>
       <ConfirmDialog
         isOpen={isDeleteConfirmOpen}
@@ -126,7 +149,7 @@ function EditorHeader({
         description="This note will be removed from Trash and cannot be restored afterward."
         confirmLabel="Delete forever"
         onClose={() => setIsDeleteConfirmOpen(false)}
-        onConfirm={() => void deleteNotePermanently(note.id)}
+        onConfirm={() => void deleteNotePermanently(note?.id)}
       />
     </>
   );

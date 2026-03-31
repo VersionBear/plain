@@ -1,18 +1,9 @@
 import { useNotesStore } from '../store/useNotesStore';
-import {
-  FileText,
-  Plus,
-  PanelLeftClose,
-  PanelLeftOpen,
-  FolderSync,
-  AlertCircle,
-} from 'lucide-react';
+import { FileText, Plus, FolderSync, AlertCircle } from 'lucide-react';
 
 function EmptyEditorState({
   totalNotes,
   searchQuery,
-  isSidebarCollapsed,
-  onToggleSidebar,
   activeSection,
 }) {
   const createNote = useNotesStore((state) => state.createNote);
@@ -28,22 +19,7 @@ function EmptyEditorState({
     !storageStatus?.hasFolderConnection;
 
   return (
-    <main className="relative flex flex-1 flex-col items-center justify-center bg-canvas p-6">
-      <div className="absolute left-6 top-6 hidden md:block">
-        <button
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label={isSidebarCollapsed ? 'Open sidebar' : 'Close sidebar'}
-          className="rounded-lg p-2 text-muted transition-colors hover:bg-line/50 hover:text-ink"
-        >
-          {isSidebarCollapsed ? (
-            <PanelLeftOpen size={20} />
-          ) : (
-            <PanelLeftClose size={20} />
-          )}
-        </button>
-      </div>
-
+    <div className="flex w-full flex-1 flex-col items-center justify-center p-6">
       <div className="flex w-full max-w-md animate-fade-in flex-col items-center text-center">
         <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-line/30">
           <FileText size={32} className="text-muted" />
@@ -134,7 +110,7 @@ function EmptyEditorState({
           </button>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 

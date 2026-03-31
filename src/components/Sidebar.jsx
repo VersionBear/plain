@@ -331,28 +331,25 @@ function Sidebar({
         />
       </div>
 
-      <div className="shrink-0 border-t border-line/80 px-4 py-3 md:px-5">
-        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-muted">
-          <div className="font-medium text-muted">
-            &copy; {currentYear} Plain
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
+      <div className="shrink-0 border-t border-line/80 px-4 py-4 md:px-5">
+        <div className="flex flex-col gap-y-3 text-xs">
+          <div className="flex flex-wrap items-center gap-4">
             <a
               href={docsUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center text-[11px] font-medium text-muted transition-colors hover:text-ink"
+              className="inline-flex items-center font-medium text-muted transition-colors hover:text-ink"
             >
-              Docs
+              Documentation
             </a>
             <button
               type="button"
               onClick={onOpenFoundersRedeem}
               className={clsx(
-                'inline-flex items-center gap-1.5 text-[11px] font-medium transition-colors hover:text-ink',
+                'inline-flex items-center gap-1.5 font-medium transition-colors hover:text-ink',
                 hasEarlyAccess
                   ? 'text-emerald-600 dark:text-emerald-300'
-                  : 'text-muted',
+                  : 'text-accent',
               )}
             >
               {hasEarlyAccess ? (
@@ -364,6 +361,9 @@ function Sidebar({
                 'Redeem founders pack'
               )}
             </button>
+          </div>
+          <div className="font-medium text-muted/60">
+            &copy; {currentYear} Plain
           </div>
         </div>
       </div>

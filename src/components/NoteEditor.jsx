@@ -90,7 +90,7 @@ function NoteEditor({ note, isReadOnly = false }) {
     editorProps: {
       attributes: {
         class:
-          'prose prose-lg sm:prose-xl dark:prose-invert focus:outline-none max-w-none min-h-[50vh] leading-relaxed',
+          'prose sm:prose-lg dark:prose-invert focus:outline-none max-w-none min-h-[50vh]',
       },
       handlePaste(view, event) {
         const files = Array.from(event.clipboardData?.files ?? []).filter(

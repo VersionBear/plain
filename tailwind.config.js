@@ -66,7 +66,7 @@ export default {
           css: {
             maxWidth: '100%',
             color: 'rgb(var(--color-ink))',
-            lineHeight: '1.8',
+            lineHeight: '1.6',
             p: {
               marginTop: '1.25em',
               marginBottom: '1.25em',

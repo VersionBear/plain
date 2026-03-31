@@ -286,7 +286,7 @@ function EditorToolbar({
   ];
 
   return (
-    <div className="editor-toolbar sticky top-0 z-[5] -mx-4 mb-4">
+    <div className="editor-toolbar sticky top-0 z-[5] -mx-4 mb-4 transition-opacity duration-300 focus-within:opacity-100 md:opacity-0 md:group-hover:opacity-100">
       <div className="border-b border-line bg-canvas/90 shadow-sm backdrop-blur">
         <div className="flex gap-1 overflow-x-auto px-4 py-2">
           {textButtons.map((button) => (
