@@ -81,7 +81,7 @@ function NoteList({ notes, totalNotes, onSelect, section }) {
   });
 
   return (
-    <div className="flex-1 overflow-y-auto scroll-smooth px-3 py-3">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto scroll-smooth px-3 py-3">
       <div className="sticky top-0 z-[1] mb-3 flex items-center justify-between gap-2 rounded-2xl border border-line/70 bg-panel/85 px-3 py-2 backdrop-blur">
         <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted">
           {summary}

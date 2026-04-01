@@ -91,12 +91,6 @@ function App() {
 
   const availableTags = useMemo(() => getTagSummary(notes), [notes]);
 
-  useEffect(() => {
-    if (selectedNoteId) {
-      setIsMobileSidebarOpen(false);
-    }
-  }, [selectedNoteId]);
-
   const handleCreateNote = () => {
     createNote();
     setIsMobileSidebarOpen(false);

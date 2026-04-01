@@ -132,7 +132,7 @@ function Sidebar({
   };
 
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-panel">
+    <div className="flex h-full min-h-0 flex-col bg-panel">
       <div className="shrink-0 px-4 pb-4 pt-4 md:px-5 md:pb-5 md:pt-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-3">
@@ -338,7 +338,7 @@ function Sidebar({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 border-t border-line/80">
+      <div className="flex min-h-0 flex-1 flex-col border-t border-line/80">
         <NoteList
           notes={notes}
           totalNotes={currentSectionCount}
@@ -415,17 +415,17 @@ function Sidebar({
           aria-hidden={!isMobileOpen}
           tabIndex={-1}
           className={clsx(
-            'absolute inset-y-0 left-0 flex w-[85%] max-w-[320px] flex-col bg-panel shadow-2xl transition-transform duration-300 ease-out',
+            'absolute inset-y-0 left-0 flex min-h-0 w-[85%] max-w-[320px] flex-col overflow-hidden bg-panel shadow-2xl transition-transform duration-300 ease-out',
             isMobileOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
-          <div className="flex-1 overflow-y-auto">{sidebarContent}</div>
+          <div className="min-h-0 flex-1">{sidebarContent}</div>
         </aside>
       </div>
 
       <aside
         className={clsx(
-          'hidden shrink-0 flex-col border-r border-line bg-panel transition-all duration-300 ease-in-out md:flex',
+          'hidden min-h-0 shrink-0 flex-col overflow-hidden border-r border-line bg-panel transition-all duration-300 ease-in-out md:flex',
           isCollapsed
             ? 'w-0 overflow-hidden opacity-0'
             : isZenMode
