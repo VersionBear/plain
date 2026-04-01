@@ -5,13 +5,22 @@ import {
 } from './folderStorage';
 import { createLegacyLocalStorageStorage } from './legacyLocalStorage';
 import { createOpfsStorage, supportsOpfsStorage } from './opfsStorage';
+import { getFileSystemAccessSupport } from '../utils/platform';
 
 export function getStorageCapabilities() {
+  const fsSupport = getFileSystemAccessSupport();
+  
   return {
-    supportsFolderPicker:
-      typeof window !== 'undefined' &&
-      typeof window.showDirectoryPicker === 'function',
+    supportsFolderPicker: fsSupport.shouldShowFolderPicker,
     supportsOpfs: supportsOpfsStorage(),
+    isMobile: fsSupport.isMobile,
+    isIOS: fsSupport.isIOS,
+    isPWA: fsSupport.isPWA,
+    folderStorageWarning: fsSupport.shouldShowWarning
+      ? getFileSystemAccessSupport().isIOS
+        ? 'Folder storage is not available on iOS'
+        : 'Folder connections may be less reliable on mobile devices'
+      : null,
   };
 }
 

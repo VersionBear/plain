@@ -61,6 +61,9 @@ export function buildStorageStatus(
     isConnectingFolder: false,
     lastError: '',
     pendingImportCount,
+    isMobile: capabilities.isMobile ?? false,
+    isIOS: capabilities.isIOS ?? false,
+    folderStorageWarning: capabilities.folderStorageWarning ?? null,
     ...overrides,
   };
 }

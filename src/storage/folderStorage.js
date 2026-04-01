@@ -4,6 +4,7 @@ import {
   getStoredFolderHandle,
   setStoredFolderHandle,
 } from './folderHandleDb';
+import { isIOS } from '../utils/platform';
 
 function createFolderStorage(handle) {
   return createFileSystemStorage({
@@ -15,6 +16,11 @@ function createFolderStorage(handle) {
 
 async function canUseFolderHandle(handle, { requestPermission = false } = {}) {
   if (!handle) {
+    return false;
+  }
+
+  // iOS doesn't support File System Access API at all
+  if (isIOS()) {
     return false;
   }
 
@@ -56,7 +62,12 @@ export async function pickFolderStorage() {
     typeof window === 'undefined' ||
     typeof window.showDirectoryPicker !== 'function'
   ) {
-    throw new Error('This browser does not support choosing a notes folder.');
+    throw new Error('Folder storage is not supported on this device. Your notes will be stored in browser storage instead.');
+  }
+
+  // iOS doesn't support File System Access API
+  if (isIOS()) {
+    throw new Error('Folder storage is not available on iOS. Your notes will be stored in browser storage instead.');
   }
 
   const restoredStorage = await restoreFolderStorage({
