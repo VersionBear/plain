@@ -54,7 +54,6 @@ function App() {
   const appVersion = packageJson.version;
   const notes = useNotesStore((state) => state.notes);
   const trashedNotes = useNotesStore((state) => state.trashedNotes);
-  const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
   const createNote = useNotesStore((state) => state.createNote);
   const searchQuery = useNotesStore((state) => state.searchQuery);
   const activeTag = useNotesStore((state) => state.activeTag);
