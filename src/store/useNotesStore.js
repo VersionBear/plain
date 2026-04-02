@@ -21,6 +21,7 @@ import {
   createWelcomeNote,
   shouldSeedWelcomeNote,
 } from '../utils/welcomeNote';
+import { createNoteFromTemplate } from '../utils/noteTemplates';
 import {
   createNoteMutation,
   deleteNotePermanentlyMutation,
@@ -42,6 +43,11 @@ import {
   clearSyncError,
   setSyncError,
 } from './notesStore/storageStatus';
+import { flushActiveEditorDrafts } from '../utils/editorDraftRegistry';
+import {
+  applyDraftRecoveryToLibrary,
+  clearDraftRecoverySnapshot,
+} from '../utils/draftRecovery';
 
 const capabilities = getStorageCapabilities();
 let activeStorageAdapter = null;
@@ -71,6 +77,7 @@ function getRollbackState(state) {
     selectedNoteId: state.selectedNoteId,
     activeTag: state.activeTag,
     activeSection: state.activeSection,
+    hasInitializedLibrary: state.hasInitializedLibrary,
   };
 }
 
@@ -83,6 +90,7 @@ async function persistIndexSnapshot(set, get) {
     await activeStorageAdapter.saveIndex({
       selectedNoteId: get().selectedNoteId,
       activeSection: get().activeSection,
+      hasInitializedLibrary: get().hasInitializedLibrary,
     });
     clearSyncError(set);
     return true;
@@ -168,6 +176,7 @@ export const useNotesStore = create((set, get) => ({
   searchQuery: '',
   activeTag: '',
   activeSection: 'notes',
+  hasInitializedLibrary: false,
   isHydrated: false,
   storageStatus: buildStatus(null, { isHydrating: true }),
   async hydrateLibrary() {
@@ -215,6 +224,7 @@ export const useNotesStore = create((set, get) => ({
           ...library.index,
           activeSection: 'notes',
           selectedNoteId: welcomeNote.id,
+          hasInitializedLibrary: true,
         };
 
         try {
@@ -230,6 +240,26 @@ export const useNotesStore = create((set, get) => ({
           setSyncError(set, error);
           library = await activeStorageAdapter.loadLibrary().catch(() => library);
         }
+      }
+
+      const {
+        library: recoveredLibrary,
+        recoveredNote,
+        didConsumeRecovery,
+      } = applyDraftRecoveryToLibrary(library);
+
+      library = recoveredLibrary;
+
+      if (recoveredNote) {
+        try {
+          await activeStorageAdapter.saveNote(recoveredNote);
+          await activeStorageAdapter.saveIndex(library.index);
+          clearDraftRecoverySnapshot(recoveredNote.id);
+        } catch (error) {
+          setSyncError(set, error);
+        }
+      } else if (didConsumeRecovery) {
+        clearDraftRecoverySnapshot();
       }
 
       const normalizedState = normalizeLoadedState(
@@ -402,11 +432,17 @@ export const useNotesStore = create((set, get) => ({
 
     await persistIndexSnapshot(set, get);
   },
-  createNote() {
+  createNote(options = {}) {
+    flushActiveEditorDrafts('create-note');
+
+    const nextNote = options.templateId
+      ? createNoteFromTemplate(options.templateId, options)
+      : makeEmptyNote(options.overrides);
+
     void applyPersistedMutation({
       set,
       get,
-      mutate: (state) => createNoteMutation(state, makeEmptyNote()),
+      mutate: (state) => createNoteMutation(state, nextNote),
       persist: (storage, result) => storage.saveNote(result.note),
       persistIndex: true,
     });
@@ -420,6 +456,8 @@ export const useNotesStore = create((set, get) => ({
     });
   },
   async trashNote(noteId) {
+    flushActiveEditorDrafts('trash-note');
+
     await applyPersistedMutation({
       set,
       get,
@@ -438,6 +476,8 @@ export const useNotesStore = create((set, get) => ({
     });
   },
   async deleteNotePermanently(noteId) {
+    clearDraftRecoverySnapshot(noteId);
+
     await applyPersistedMutation({
       set,
       get,
@@ -456,6 +496,10 @@ export const useNotesStore = create((set, get) => ({
     });
   },
   selectNote(noteId) {
+    if (get().selectedNoteId !== noteId) {
+      flushActiveEditorDrafts('select-note');
+    }
+
     set({ selectedNoteId: noteId });
     void persistIndexSnapshot(set, get);
   },
@@ -531,6 +575,8 @@ export const useNotesStore = create((set, get) => ({
     });
   },
   setActiveSection(activeSection) {
+    flushActiveEditorDrafts('set-active-section');
+
     const result = setActiveSectionMutation(get(), activeSection);
 
     if (!result) {
@@ -544,6 +590,8 @@ export const useNotesStore = create((set, get) => ({
     set({ searchQuery });
   },
   setActiveTag(activeTag) {
+    flushActiveEditorDrafts('set-active-tag');
+
     const result = setActiveTagMutation(get(), activeTag);
 
     if (!result) {

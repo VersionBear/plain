@@ -12,9 +12,9 @@ import Sidebar from './components/Sidebar';
 import { useTheme } from './hooks/useTheme';
 import {
   selectHasEarlyAccess,
+  selectPlanTier,
   useFoundersStore,
 } from './store/useFoundersStore';
-import { useExportStore } from './store/useExportStore';
 import { useNotesStore } from './store/useNotesStore';
 import {
   filterNotes,
@@ -25,6 +25,7 @@ import {
 } from './utils/notes';
 import { Menu, Plus } from 'lucide-react';
 
+const CreateNoteMenu = lazy(() => import('./components/CreateNoteMenu'));
 const ExportModal = lazy(() => import('./components/ExportModal'));
 const FoundersRedeemModal = lazy(
   () => import('./components/FoundersRedeemModal'),
@@ -42,16 +43,20 @@ function HydrationScreen() {
           Loading your notes
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted">
-          Opening your library and local storage.
+          Opening notes from this browser or your connected folder.
         </p>
       </div>
     </div>
   );
 }
 
+function getDisplayVersion(version) {
+  return version === '1.0.0' ? '1' : version;
+}
+
 function App() {
   const themeState = useTheme();
-  const appVersion = packageJson.version;
+  const appVersion = getDisplayVersion(packageJson.version);
   const notes = useNotesStore((state) => state.notes);
   const trashedNotes = useNotesStore((state) => state.trashedNotes);
   const createNote = useNotesStore((state) => state.createNote);
@@ -61,8 +66,8 @@ function App() {
   const hydrateLibrary = useNotesStore((state) => state.hydrateLibrary);
   const isHydrated = useNotesStore((state) => state.isHydrated);
   const storageStatus = useNotesStore((state) => state.storageStatus);
-  const isExportModalOpen = useExportStore((state) => state.isExportModalOpen);
   const hasEarlyAccess = useFoundersStore(selectHasEarlyAccess);
+  const planTier = useFoundersStore(selectPlanTier);
   const activeProductName = useFoundersStore((state) => state.productName);
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -70,6 +75,7 @@ function App() {
     useState(false);
   const [isFoundersModalOpen, setIsFoundersModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
 
   useEffect(() => {
     void hydrateLibrary();
@@ -90,9 +96,23 @@ function App() {
 
   const availableTags = useMemo(() => getTagSummary(notes), [notes]);
 
-  const handleCreateNote = () => {
-    createNote();
+  const closeCreateMenu = () => {
+    setIsCreateMenuOpen(false);
+  };
+
+  const handleOpenCreateMenu = () => {
+    setIsCreateMenuOpen(true);
+  };
+
+  const handleCreateNote = (options = {}) => {
+    createNote(options);
+    closeCreateMenu();
     setIsMobileSidebarOpen(false);
+  };
+
+  const handleOpenFoundersRedeem = () => {
+    closeCreateMenu();
+    setIsFoundersModalOpen(true);
   };
 
   if (!isHydrated) {
@@ -114,7 +134,7 @@ function App() {
           <span className="font-medium tracking-tight">Plain</span>
         </div>
         <button
-          onClick={handleCreateNote}
+          onClick={handleOpenCreateMenu}
           aria-label="Create new note"
           className="-mr-1 p-1 text-muted transition-colors hover:text-ink"
         >
@@ -128,7 +148,7 @@ function App() {
           notes={visibleNotes}
           activeNotesCount={notes.length}
           trashedNotesCount={trashedNotes.length}
-          onCreateNote={handleCreateNote}
+          onCreateNote={handleOpenCreateMenu}
           onNoteSelect={() => setIsMobileSidebarOpen(false)}
           isMobileOpen={isMobileSidebarOpen}
           onCloseMobile={() => setIsMobileSidebarOpen(false)}
@@ -141,7 +161,7 @@ function App() {
           appVersion={appVersion}
           hasEarlyAccess={hasEarlyAccess}
           activeProductName={activeProductName}
-          onOpenFoundersRedeem={() => setIsFoundersModalOpen(true)}
+          onOpenFoundersRedeem={handleOpenFoundersRedeem}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
         />
         <EditorPane
@@ -154,35 +174,43 @@ function App() {
             setIsDesktopSidebarCollapsed((current) => !current)
           }
           activeSection={activeSection}
+          onCreateNote={handleOpenCreateMenu}
         />
       </div>
 
+      <Suspense fallback={null}>
+        <CreateNoteMenu
+          isOpen={isCreateMenuOpen}
+          onClose={closeCreateMenu}
+          onCreateBlank={() => handleCreateNote()}
+          onCreateFromTemplate={(templateId) =>
+            handleCreateNote({ templateId })
+          }
+          onUpgrade={handleOpenFoundersRedeem}
+          planTier={planTier}
+        />
+      </Suspense>
+
       {/* Export Modal */}
-      {isExportModalOpen ? (
-        <Suspense fallback={null}>
-          <ExportModal />
-        </Suspense>
-      ) : null}
+      <Suspense fallback={null}>
+        <ExportModal />
+      </Suspense>
 
-      {isFoundersModalOpen ? (
-        <Suspense fallback={null}>
-          <FoundersRedeemModal
-            isOpen={isFoundersModalOpen}
-            onClose={() => setIsFoundersModalOpen(false)}
-          />
-        </Suspense>
-      ) : null}
+      <Suspense fallback={null}>
+        <FoundersRedeemModal
+          isOpen={isFoundersModalOpen}
+          onClose={() => setIsFoundersModalOpen(false)}
+        />
+      </Suspense>
 
-      {isSettingsModalOpen ? (
-        <Suspense fallback={null}>
-          <SettingsModal
-            isOpen={isSettingsModalOpen}
-            onClose={() => setIsSettingsModalOpen(false)}
-            theme={themeState.theme}
-            setTheme={themeState.setTheme}
-          />
-        </Suspense>
-      ) : null}
+      <Suspense fallback={null}>
+        <SettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          theme={themeState.theme}
+          setTheme={themeState.setTheme}
+        />
+      </Suspense>
     </div>
   );
 }

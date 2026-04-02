@@ -1,13 +1,14 @@
 import { useNotesStore } from '../store/useNotesStore';
 import { FileText, Plus, FolderSync, AlertCircle } from 'lucide-react';
 import { getDailyEmptyStateMessage } from '../utils/emptyStateContent';
+import { DOCS_URL, SUPPORT_URL } from '../utils/publicLinks';
 
 function EmptyEditorState({
   totalNotes,
   searchQuery,
   activeSection,
+  onCreateNote,
 }) {
-  const createNote = useNotesStore((state) => state.createNote);
   const activeTag = useNotesStore((state) => state.activeTag);
   const storageStatus = useNotesStore((state) => state.storageStatus);
   const connectFolderStorage = useNotesStore(
@@ -15,10 +16,7 @@ function EmptyEditorState({
   );
   const dailyMessage = getDailyEmptyStateMessage();
   const showDailyMessage =
-    activeSection === 'notes' &&
-    totalNotes > 0 &&
-    !searchQuery &&
-    !activeTag;
+    activeSection === 'notes' && totalNotes > 0 && !searchQuery && !activeTag;
 
   const showFolderCTA =
     activeSection === 'notes' &&
@@ -42,7 +40,7 @@ function EmptyEditorState({
           {activeSection === 'trash'
             ? 'Nothing selected'
             : totalNotes === 0
-              ? 'Welcome to Plain'
+              ? 'Your notes start here'
               : searchQuery || activeTag
                 ? 'Select a note to view'
                 : dailyMessage.title}
@@ -56,13 +54,23 @@ function EmptyEditorState({
                 ? 'Your trash is empty.'
                 : 'Select a trashed note to restore or permanently delete.'
             : totalNotes === 0
-              ? 'A beautiful, local-first space for your thoughts. Start writing without distractions.'
+              ? 'Plain saves on this device first. Start writing right away.'
               : searchQuery || activeTag
                 ? activeTag
                   ? `No notes match #${activeTag}${searchQuery ? ' and your current search.' : '.'}`
                   : 'No notes match your current search.'
                 : dailyMessage.body}
         </p>
+
+        {activeSection === 'notes' && (
+          <p className="mb-7 max-w-md text-xs leading-relaxed text-muted">
+            {storageStatus?.hasFolderConnection
+              ? 'This library is saving to your connected folder as Markdown files.'
+              : storageStatus?.supportsFolderPicker
+                ? 'Browser-only notes stay in this browser on this device. There is no built-in sync or account recovery.'
+                : 'Notes stay in browser-managed storage on this device. Export backups if you need a copy somewhere else.'}
+          </p>
+        )}
 
         {showFolderCTA && (
           <div className="mb-7 w-full rounded-2xl border border-line bg-elevated/70 p-4 text-left shadow-sm">
@@ -73,11 +81,11 @@ function EmptyEditorState({
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-ink">
-                    Store notes in a folder
+                    Connect a folder for files on disk
                   </h3>
                   <p className="mt-1 text-xs leading-relaxed text-muted">
-                    Optional, but useful if you want real markdown files on disk
-                    instead of browser-only storage.
+                    Optional, but clearer for backup peace of mind. Your notes
+                    save as Markdown files you can see and manage yourself.
                   </p>
                 </div>
               </div>
@@ -114,15 +122,33 @@ function EmptyEditorState({
         ) : null}
 
         {activeSection === 'notes' && (
-          <button
-            type="button"
-            onClick={createNote}
-            title="Create new note"
-            className="flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-canvas shadow-sm transition-opacity hover:opacity-90"
-          >
-            <Plus size={18} />
-            Create new note
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={(event) => onCreateNote?.(event.currentTarget)}
+              title="Create new note"
+              className="flex items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-canvas shadow-sm transition-opacity hover:opacity-90"
+            >
+              <Plus size={18} />
+              Create new note
+            </button>
+            <a
+              href={DOCS_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-line px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-line/30 hover:text-ink"
+            >
+              Storage guide
+            </a>
+            <a
+              href={SUPPORT_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-line px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-line/30 hover:text-ink"
+            >
+              Support
+            </a>
+          </div>
         )}
       </div>
     </div>

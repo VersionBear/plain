@@ -169,6 +169,20 @@ body.linen-blue {
   --color-chrome: 232 238 246;
 }
 
+:root.easter-bloom,
+html.easter-bloom,
+body.easter-bloom {
+  --color-canvas: 255 248 251;
+  --color-panel: 247 239 229;
+  --color-line: 235 220 225;
+  --color-ink: 92 65 78;
+  --color-muted: 156 129 141;
+  --color-accent: 245 158 175;
+  --color-pin: 250 244 236;
+  --color-elevated: 255 252 247;
+  --color-chrome: 247 239 229;
+}
+
 :root.rose-paper,
 html.rose-paper,
 body.rose-paper {
@@ -223,6 +237,20 @@ body.porcelain-ink {
   --color-pin: 235 230 223;
   --color-elevated: 253 251 247;
   --color-chrome: 241 237 231;
+}
+
+:root.versionbear,
+html.versionbear,
+body.versionbear {
+  --color-canvas: 255 249 245;
+  --color-panel: 253 246 241;
+  --color-line: 235 220 205;
+  --color-ink: 52 42 36;
+  --color-muted: 138 118 102;
+  --color-accent: 245 158 11;
+  --color-pin: 250 238 228;
+  --color-elevated: 255 251 245;
+  --color-chrome: 253 246 241;
 }
 
 * {
@@ -329,17 +357,110 @@ body.dark .hairline {
   pointer-events: none;
 }
 
-.prose-compact {
-  line-height: 1.5 !important;
+.note-prose {
+  --plain-flow-space: 1.15rem;
+  --plain-heading-space: 2rem;
+  --plain-heading-follow-space: 0.75rem;
+  --plain-list-item-space: 0.65rem;
+  --plain-nested-list-space: 0.5rem;
+  line-height: 1.65 !important;
 }
 
-.prose-compact p,
-.prose-compact ul,
-.prose-compact ol,
-.prose-compact li {
-  margin-top: 0.75em !important;
-  margin-bottom: 0.75em !important;
-  line-height: 1.5 !important;
+.note-prose > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.note-prose > :is(p, ul, ol, blockquote, pre, table, figure, hr) + :is(
+    p,
+    ul,
+    ol,
+    blockquote,
+    pre,
+    table,
+    figure,
+    hr
+  ) {
+  margin-top: var(--plain-flow-space) !important;
+}
+
+.note-prose > :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: var(--plain-heading-space) !important;
+  margin-bottom: 0 !important;
+  line-height: 1.15 !important;
+}
+
+.note-prose > :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-top: 0 !important;
+}
+
+.note-prose > :is(h1, h2, h3, h4, h5, h6) + :is(
+    p,
+    ul,
+    ol,
+    blockquote,
+    pre,
+    table,
+    figure,
+    hr
+  ) {
+  margin-top: var(--plain-heading-follow-space) !important;
+}
+
+.note-prose :is(ul, ol) {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-left: clamp(1.15rem, 1rem + 0.6vw, 1.55rem) !important;
+}
+
+.note-prose :is(ul, ol) > li {
+  margin: 0 !important;
+  padding-left: 0.2rem;
+}
+
+.note-prose :is(ul, ol) > li + li {
+  margin-top: var(--plain-list-item-space) !important;
+}
+
+.note-prose li > p {
+  margin: 0 !important;
+}
+
+.note-prose li > :is(ul, ol) {
+  margin-top: var(--plain-nested-list-space) !important;
+}
+
+.note-prose ul[data-type='taskList'] {
+  padding-left: 0 !important;
+}
+
+.note-prose ul[data-type='taskList'] > li + li {
+  margin-top: 0.55rem !important;
+}
+
+.prose-compact {
+  --plain-flow-space: 0.95rem;
+  --plain-heading-space: 1.55rem;
+  --plain-heading-follow-space: 0.55rem;
+  --plain-list-item-space: 0.45rem;
+  --plain-nested-list-space: 0.4rem;
+  line-height: 1.55 !important;
+}
+
+@media (min-width: 768px) {
+  .note-prose {
+    --plain-flow-space: 1.25rem;
+    --plain-heading-space: 2.3rem;
+    --plain-heading-follow-space: 0.8rem;
+    --plain-list-item-space: 0.72rem;
+  }
+
+  .prose-compact {
+    --plain-flow-space: 1rem;
+    --plain-heading-space: 1.7rem;
+    --plain-heading-follow-space: 0.6rem;
+    --plain-list-item-space: 0.5rem;
+  }
 }
 
 ul[data-type='taskList'] {

@@ -9,6 +9,8 @@ import LinkTooltip from './editor/LinkTooltip';
 import { isUrlLikeSelection, normalizeUrl } from './editor/linkUtils';
 import { useNotesStore } from '../store/useNotesStore';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { registerActiveEditorDrafts } from '../utils/editorDraftRegistry';
+import { writeDraftRecoverySnapshot } from '../utils/draftRecovery';
 import clsx from 'clsx';
 
 function NoteEditor({ note, isReadOnly = false }) {
@@ -46,6 +48,10 @@ function NoteEditor({ note, isReadOnly = false }) {
   const scheduleTitleSave = useCallback(
     (nextTitle) => {
       pendingTitleRef.current = nextTitle;
+      writeDraftRecoverySnapshot(note, {
+        title: nextTitle,
+        content: pendingContentRef.current,
+      });
 
       if (titleSaveTimerRef.current) {
         clearTimeout(titleSaveTimerRef.current);
@@ -56,7 +62,7 @@ function NoteEditor({ note, isReadOnly = false }) {
         titleSaveTimerRef.current = null;
       }, 300);
     },
-    [note.id, updateNote],
+    [note, updateNote],
   );
 
   const flushContentSave = useCallback(() => {
@@ -73,6 +79,11 @@ function NoteEditor({ note, isReadOnly = false }) {
     );
   }, [note.id, updateNote]);
 
+  const flushDrafts = useCallback(() => {
+    flushTitleSave();
+    flushContentSave();
+  }, [flushContentSave, flushTitleSave]);
+
   const editor = useEditor({
     extensions: getNoteEditorExtensions(),
     content: note.content || '',
@@ -80,6 +91,10 @@ function NoteEditor({ note, isReadOnly = false }) {
     onUpdate: ({ editor: nextEditor }) => {
       const html = nextEditor.getHTML();
       pendingContentRef.current = html;
+      writeDraftRecoverySnapshot(note, {
+        title: pendingTitleRef.current,
+        content: html,
+      });
 
       if (contentSaveTimerRef.current) {
         clearTimeout(contentSaveTimerRef.current);
@@ -93,8 +108,8 @@ function NoteEditor({ note, isReadOnly = false }) {
     editorProps: {
       attributes: {
         class: clsx(
-          'prose sm:prose-lg dark:prose-invert focus:outline-none max-w-none min-h-[50vh]',
-          isCompactMode ? 'prose-compact' : ''
+          'note-prose prose dark:prose-invert focus:outline-none max-w-none min-h-[50vh]',
+          isCompactMode ? 'prose-compact' : '',
         ),
       },
       handlePaste(view, event) {
@@ -175,10 +190,17 @@ function NoteEditor({ note, isReadOnly = false }) {
 
   useEffect(() => {
     return () => {
-      flushTitleSave();
-      flushContentSave();
+      flushDrafts();
     };
-  }, [flushContentSave, flushTitleSave]);
+  }, [flushDrafts]);
+
+  useEffect(() => {
+    if (isReadOnly) {
+      return undefined;
+    }
+
+    return registerActiveEditorDrafts(note.id, flushDrafts);
+  }, [flushDrafts, isReadOnly, note.id]);
 
   useEffect(() => {
     if (!isLinkPopoverOpen) {
@@ -473,7 +495,7 @@ function NoteEditor({ note, isReadOnly = false }) {
           scheduleTitleSave(nextTitle);
         }}
         onBlur={flushTitleSave}
-        placeholder={isReadOnly ? 'Untitled note' : 'Note Title'}
+        placeholder={isReadOnly ? 'Untitled note' : 'Note title'}
         className={`note-print-title w-full rounded-2xl border-0 bg-transparent p-0 text-4xl font-semibold tracking-tight text-ink placeholder-muted/50 transition-colors focus:outline-none sm:text-5xl ${
           isReadOnly ? 'cursor-default' : ''
         }`}
@@ -489,8 +511,8 @@ function NoteEditor({ note, isReadOnly = false }) {
 
       {isReadOnly ? (
         <div className="rounded-xl border border-line bg-panel p-4 text-sm text-muted">
-          This note is in Trash. Restore it to edit again, or delete it
-          permanently.
+          This note is in Trash. Restore it to edit again. Delete it forever
+          only if you are sure you no longer need it.
         </div>
       ) : (
         <>
@@ -507,13 +529,6 @@ function NoteEditor({ note, isReadOnly = false }) {
               editor={editor}
               onOpenLink={openLinkPopover}
               onAddImage={() => imageInputRef.current?.click()}
-              onAddTable={() =>
-                editor
-                  .chain()
-                  .focus()
-                  .insertTable({ rows: 2, cols: 2, withHeaderRow: true })
-                  .run()
-              }
               isLinkMenuActive={isLinkPopoverOpen}
               linkButtonRef={linkButtonRef}
             />

@@ -11,7 +11,7 @@ describe('welcome note helpers', () => {
     expect(note.title).toBe('Welcome to Plain');
     expect(note.pinned).toBe(true);
     expect(note.tags).toEqual(['editor-tips', 'local-first', 'welcome']);
-    expect(note.content).toContain('Local-first, by default');
+    expect(note.content).toContain('Your notes start on this device');
     expect(note.content).toContain('data-type="taskList"');
     expect(note.content).toContain('<table>');
   });
@@ -19,6 +19,7 @@ describe('welcome note helpers', () => {
   it('seeds only when the library is truly empty', () => {
     expect(
       shouldSeedWelcomeNote({
+        index: { hasInitializedLibrary: false },
         notes: [],
         trashedNotes: [],
       }),
@@ -26,6 +27,7 @@ describe('welcome note helpers', () => {
 
     expect(
       shouldSeedWelcomeNote({
+        index: { hasInitializedLibrary: false },
         notes: [{ id: 'existing-note' }],
         trashedNotes: [],
       }),
@@ -34,6 +36,7 @@ describe('welcome note helpers', () => {
     expect(
       shouldSeedWelcomeNote(
         {
+          index: { hasInitializedLibrary: false },
           notes: [],
           trashedNotes: [],
         },
@@ -42,6 +45,14 @@ describe('welcome note helpers', () => {
           trashedNotes: [],
         },
       ),
+    ).toBe(false);
+
+    expect(
+      shouldSeedWelcomeNote({
+        index: { hasInitializedLibrary: true },
+        notes: [],
+        trashedNotes: [],
+      }),
     ).toBe(false);
   });
 });

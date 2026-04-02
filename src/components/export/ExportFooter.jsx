@@ -13,6 +13,13 @@ function ExportFooter({
 }) {
   return (
     <div className="shrink-0 border-t border-line bg-canvas/50 px-4 py-4 md:px-6">
+      {!exportProgress && !exportError ? (
+        <p className="mb-3 text-xs leading-relaxed text-muted">
+          Export creates a separate copy of this note. Your original stays in
+          Plain.
+        </p>
+      ) : null}
+
       {exportProgress?.stage === 'error' ? (
         <div className="mb-3 flex items-center gap-3 rounded-xl bg-red-500/10 p-3 text-red-500">
           <AlertCircle size={18} className="shrink-0" />
@@ -69,7 +76,7 @@ function ExportFooter({
             <>
               <Download size={18} />
               <span className="hidden md:inline">
-                Export as {currentFormat?.label}
+                Export {currentFormat?.label}
               </span>
               <span className="md:hidden">Export</span>
             </>

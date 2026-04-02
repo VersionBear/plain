@@ -10,8 +10,10 @@ export function isIOS() {
   if (typeof navigator === 'undefined') {
     return false;
   }
-  return /iPad|iPhone|iPod/.test(navigator.platform) || 
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  return (
+    /iPad|iPhone|iPod/.test(navigator.platform) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
 }
 
 /**
@@ -22,7 +24,9 @@ export function isAndroidMobile() {
   if (typeof navigator === 'undefined') {
     return false;
   }
-  return /Android/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent);
+  return (
+    /Android/.test(navigator.userAgent) && /Mobile/.test(navigator.userAgent)
+  );
 }
 
 /**
@@ -41,12 +45,14 @@ export function isPWA() {
   if (typeof window === 'undefined') {
     return false;
   }
-  
+
   // Check matchMedia with fallback for test environments
-  const matchMedia = window.matchMedia?.('(display-mode: standalone)').matches ?? false;
-  const matchMediaFullscreen = window.matchMedia?.('(display-mode: fullscreen)').matches ?? false;
+  const matchMedia =
+    window.matchMedia?.('(display-mode: standalone)').matches ?? false;
+  const matchMediaFullscreen =
+    window.matchMedia?.('(display-mode: fullscreen)').matches ?? false;
   const navigatorStandalone = window.navigator.standalone === true;
-  
+
   return matchMedia || matchMediaFullscreen || navigatorStandalone;
 }
 
@@ -56,19 +62,20 @@ export function isPWA() {
  * @returns {object} Object with support details
  */
 export function getFileSystemAccessSupport() {
-  const hasAPI = typeof window !== 'undefined' && 
+  const hasAPI =
+    typeof window !== 'undefined' &&
     typeof window.showDirectoryPicker === 'function';
-  
+
   const ios = isIOS();
   const android = isAndroidMobile();
   const mobile = isMobile();
   const pwa = isPWA();
-  
+
   // iOS never supports File System Access API
   // Android has partial support but with limitations in PWA mode
   const isSupported = hasAPI && !ios;
   const hasLimitations = mobile || pwa;
-  
+
   return {
     hasAPI,
     isSupported,
@@ -90,18 +97,18 @@ export function getFileSystemAccessSupport() {
  */
 export function getFolderStorageWarningMessage() {
   const support = getFileSystemAccessSupport();
-  
+
   if (support.isIOS) {
-    return 'Folder storage is not available on iOS. Your notes are stored securely in this browser.';
+    return 'Folder storage is not available on iOS. Notes stay in this browser on this device.';
   }
-  
+
   if (support.isAndroid && support.isPWA) {
-    return 'Folder connections may disconnect when using the app in standalone mode. Consider using browser storage for better reliability.';
+    return 'Folder connections can disconnect in standalone mode on Android. Browser storage is often the safer option there.';
   }
-  
+
   if (support.isMobile && support.isPWA) {
-    return 'Folder connections may be less reliable in mobile PWA mode.';
+    return 'Folder connections can be less reliable in mobile PWA mode.';
   }
-  
+
   return null;
 }

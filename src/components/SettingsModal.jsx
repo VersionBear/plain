@@ -1,11 +1,23 @@
 import { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Lock } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { X, Lock, Check } from 'lucide-react';
 import { selectPlanTier, useFoundersStore } from '../store/useFoundersStore';
 import { useOverlayFocus } from '../hooks/useOverlayFocus';
 import { getPlanLabel, hasPlanAccess, PLAN_TIERS } from '../utils/planFeatures';
+import {
+  FOUNDER_PLAN_FEATURES,
+  PRO_PLAN_FEATURES,
+  getPaidExtrasDescription,
+} from '../utils/planCatalog';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { getThemeOption, getVisibleThemes } from '../utils/themes';
+import {
+  getThemeAccessLabel,
+  getThemeOption,
+  getVisibleThemes,
+  hasThemeAccess,
+  isEasterThemeFreePromoActive,
+} from '../utils/themes';
 import clsx from 'clsx';
 
 function SettingsModal({ isOpen, onClose, theme, setTheme }) {
@@ -14,6 +26,7 @@ function SettingsModal({ isOpen, onClose, theme, setTheme }) {
   const toggleInsightsPill = useSettingsStore((state) => state.toggleInsightsPill);
   const visibleThemes = getVisibleThemes(planTier);
   const activeThemeOption = getThemeOption(theme);
+  const easterPromoActive = isEasterThemeFreePromoActive();
 
   const titleId = useId();
   const dialogRef = useRef(null);
@@ -24,10 +37,6 @@ function SettingsModal({ isOpen, onClose, theme, setTheme }) {
     onClose,
   });
 
-  if (!isOpen) {
-    return null;
-  }
-
   const themeSummary =
     planTier === PLAN_TIERS.FREE
       ? `${visibleThemes.length} themes available`
@@ -35,21 +44,31 @@ function SettingsModal({ isOpen, onClose, theme, setTheme }) {
         ? 'Pro and Founder themes included'
         : 'Pro themes included';
 
-  const paidExtrasDescription = hasPlanAccess(planTier, PLAN_TIERS.PRO)
-    ? 'Pro unlocks premium themes, note insights, and advanced PDF layout controls. Founder adds an outline panel for long notes plus founder-only themes.'
-    : 'Pro unlocks note insights and advanced PDF layout controls. Founder adds an outline panel for long notes.';
+  const paidExtrasDescription = getPaidExtrasDescription(planTier);
 
   return createPortal(
-    <div className="fixed inset-0 z-[130] flex animate-fade-in items-center justify-center bg-ink/45 px-4 backdrop-blur-sm">
-      <div className="absolute inset-0" onClick={onClose} />
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-labelledby={titleId}
-        aria-modal="true"
-        tabIndex={-1}
-        className="relative z-10 flex max-h-[90vh] w-full max-w-lg animate-slide-up flex-col rounded-[28px] border border-line bg-panel p-6 shadow-2xl"
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="fixed inset-0 z-[130] flex items-center justify-center bg-ink/45 px-4 backdrop-blur-sm"
+        >
+          <div className="absolute inset-0" onClick={onClose} />
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            ref={dialogRef}
+            role="dialog"
+            aria-labelledby={titleId}
+            aria-modal="true"
+            tabIndex={-1}
+            className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-[28px] border border-line bg-panel p-6 shadow-2xl"
+          >
         <div className="mb-6 flex shrink-0 items-center justify-between">
           <h2
             id={titleId}
@@ -105,9 +124,15 @@ function SettingsModal({ isOpen, onClose, theme, setTheme }) {
               <div className="mt-3 -mr-1 overflow-x-auto pb-1 pr-1">
                 <div className="flex min-w-max gap-2">
                   {visibleThemes.map((themeOption) => {
-                    const isLocked =
-                      themeOption.minPlan &&
-                      !hasPlanAccess(planTier, themeOption.minPlan);
+                    const isLocked = !hasThemeAccess(themeOption.id, planTier);
+                    const accessLabel = getThemeAccessLabel(
+                      themeOption.id,
+                      planTier,
+                    );
+                    const isPromoTheme =
+                      themeOption.id === 'easter-bloom' &&
+                      easterPromoActive &&
+                      planTier === PLAN_TIERS.FREE;
 
                     return (
                       <button
@@ -150,12 +175,14 @@ function SettingsModal({ isOpen, onClose, theme, setTheme }) {
                               {themeOption.label}
                             </p>
                             <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
-                              {themeOption.minPlan
-                                ? getPlanLabel(themeOption.minPlan)
-                                : 'Included'}
+                              {accessLabel}
                             </p>
                           </div>
-                          {isLocked ? (
+                          {isPromoTheme ? (
+                            <span className="rounded-full bg-accent/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-accent">
+                              April
+                            </span>
+                          ) : isLocked ? (
                             <span className="rounded-full bg-line/45 p-1 text-muted">
                               <Lock size={12} />
                             </span>
@@ -211,10 +238,75 @@ function SettingsModal({ isOpen, onClose, theme, setTheme }) {
             <p className="mt-2 text-sm leading-relaxed text-muted">
               {paidExtrasDescription}
             </p>
+            <div className="mt-4 grid gap-3">
+              <div className="rounded-2xl border border-line/70 bg-canvas/70 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-ink">Plain Pro</p>
+                    <p className="mt-1 text-xs text-muted">
+                      Everyday upgrades for writing and export.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-line/40 px-2.5 py-1 text-[11px] font-medium text-muted">
+                    {hasPlanAccess(planTier, PLAN_TIERS.PRO)
+                      ? 'Included'
+                      : 'Upgrade'}
+                  </span>
+                </div>
+
+                <ul className="mt-4 grid gap-2">
+                  {PRO_PLAN_FEATURES.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-start gap-2 text-sm text-muted"
+                    >
+                      <Check
+                        size={14}
+                        className="mt-0.5 shrink-0 text-accent"
+                      />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-line/70 bg-canvas/70 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-ink">
+                      Founders Pack
+                    </p>
+                    <p className="mt-1 text-xs text-muted">
+                      Founder-only additions on top of Pro.
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-line/40 px-2.5 py-1 text-[11px] font-medium text-muted">
+                    {planTier === PLAN_TIERS.FOUNDER ? 'Included' : 'Founder'}
+                  </span>
+                </div>
+
+                <ul className="mt-4 grid gap-2">
+                  {FOUNDER_PLAN_FEATURES.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-start gap-2 text-sm text-muted"
+                    >
+                      <Check
+                        size={14}
+                        className="mt-0.5 shrink-0 text-amber-500"
+                      />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </section>
         </div>
-      </div>
-    </div>,
+      </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
     document.body,
   );
 }

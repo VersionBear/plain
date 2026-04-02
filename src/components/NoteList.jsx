@@ -1,6 +1,7 @@
 import NoteListItem from './NoteListItem';
 import { useNotesStore } from '../store/useNotesStore';
 import { ArchiveRestore, FileText, SearchX } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 function getListSummary({
   notesLength,
@@ -82,31 +83,40 @@ function NoteList({ notes, totalNotes, onSelect, section }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto scroll-smooth px-3 py-3">
-      <div className="sticky top-0 z-[1] mb-3 flex items-center justify-between gap-2 rounded-2xl border border-line/70 bg-panel/85 px-3 py-2 backdrop-blur">
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted">
+      <div className="mb-3 flex items-center justify-between gap-2 px-2">
+        <p className="text-[11px] font-medium text-muted/70">
           {summary}
         </p>
         <div className="flex items-center gap-1.5 overflow-hidden">
           {activeTag ? (
-            <span className="flex items-center gap-0.5 truncate rounded-md bg-accent/10 px-2 py-1 text-[10px] font-medium text-accent">
+            <span className="flex items-center gap-0.5 truncate rounded-md bg-accent/10 px-1.5 py-0.5 text-[10px] font-medium text-accent">
               <span className="opacity-50">#</span>
               {activeTag}
             </span>
           ) : null}
           {searchQuery ? (
-            <span className="truncate rounded-md bg-line/40 px-2 py-1 text-[10px] font-medium text-muted">
+            <span className="truncate rounded-md bg-line/40 px-1.5 py-0.5 text-[10px] font-medium text-muted">
               Search active
             </span>
           ) : null}
         </div>
       </div>
 
-      <ul className="flex flex-col gap-1.5">
-        {notes.map((note) => (
-          <li key={note.id}>
-            <NoteListItem note={note} onSelect={onSelect} section={section} />
-          </li>
-        ))}
+      <ul className="flex flex-col gap-1.5 pb-2">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {notes.map((note) => (
+            <motion.li
+              key={note.id}
+              layout
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -10, transition: { duration: 0.2 } }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            >
+              <NoteListItem note={note} onSelect={onSelect} section={section} />
+            </motion.li>
+          ))}
+        </AnimatePresence>
       </ul>
     </div>
   );

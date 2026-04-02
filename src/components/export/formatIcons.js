@@ -1,4 +1,4 @@
-import { Code, Download, File, FileText, Image, Book } from 'lucide-react';
+import { Code, Download, File, FileText, Image } from 'lucide-react';
 
 export const formatIcons = {
   markdown: FileText,
@@ -7,6 +7,4 @@ export const formatIcons = {
   png: Image,
   jpeg: Image,
   pdf: Download,
-  docx: FileText,
-  epub: Book,
 };

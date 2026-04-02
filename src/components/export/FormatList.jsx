@@ -27,8 +27,10 @@ function FormatList({
     <div className={containerClassName}>
       <div className="w-full space-y-6 p-4">
         <div className="mb-4 md:hidden">
-          <h3 className="mb-1 text-sm font-semibold text-ink">Select Format</h3>
-          <p className="text-xs text-muted">Choose how you want to export</p>
+          <h3 className="mb-1 text-sm font-semibold text-ink">
+            Choose a format
+          </h3>
+          <p className="text-xs text-muted">Export creates a separate file.</p>
         </div>
 
         {Object.entries(groupedFormats).map(([category, categoryFormats]) => (

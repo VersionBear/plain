@@ -19,6 +19,40 @@ const turndownService = new TurndownService({
 
 turndownService.use(gfm);
 
+turndownService.addRule('tiptapTaskItem', {
+  filter(node) {
+    return node.nodeName === 'LI' && node.getAttribute('data-type') === 'taskItem';
+  },
+  replacement(content, node, options) {
+    const isChecked = node.getAttribute('data-checked') === 'true';
+    const checkString = isChecked ? '[x]' : '[ ]';
+    
+    content = content
+      .replace(/^\n+/, '') 
+      .replace(/\n+$/, '\n') 
+      .replace(/\n/gm, '\n    '); 
+      
+    let prefix = options.bulletListMarker + ' ';
+    const parent = node.parentNode;
+    if (parent && parent.nodeName === 'OL') {
+      const start = parent.getAttribute('start');
+      const index = Array.prototype.indexOf.call(parent.children, node);
+      prefix = (start ? Number(start) + index : index + 1) + '.  ';
+    }
+    
+    return prefix + checkString + ' ' + content + (node.nextSibling && !/\n$/.test(content) ? '\n' : '');
+  }
+});
+
+turndownService.addRule('tiptapTaskCheckbox', {
+  filter(node) {
+    return node.nodeName === 'LABEL' && node.parentNode && node.parentNode.getAttribute('data-type') === 'taskItem';
+  },
+  replacement() {
+    return '';
+  }
+});
+
 turndownService.addRule('plainImageFigure', {
   filter(node) {
     return (

@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Check,
   CheckCircle2,
   KeyRound,
+  LifeBuoy,
   LoaderCircle,
   RefreshCw,
   Sparkles,
@@ -16,19 +18,11 @@ import {
 } from '../store/useFoundersStore';
 import { useOverlayFocus } from '../hooks/useOverlayFocus';
 import { PLAN_TIERS } from '../utils/planFeatures';
-
-const proFeatures = [
-  'Premium themes and palettes',
-  'Writing insights with word count, characters, and read time',
-  'Advanced PDF paper size and orientation controls',
-  'PDF plus beta DOCX and EPUB export options',
-];
-
-const founderFeatures = [
-  'Everything in Pro',
-  'Interactive outline panel for long notes',
-  'Founder-only Rose Paper, Midnight, Aurora Noir, and Porcelain Ink themes',
-];
+import {
+  FOUNDER_PLAN_FEATURES,
+  PRO_PLAN_FEATURES,
+} from '../utils/planCatalog';
+import { SUPPORT_URL } from '../utils/publicLinks';
 
 function formatVerificationTimestamp(timestamp) {
   if (!timestamp) {
@@ -96,10 +90,6 @@ function FoundersRedeemModal({ isOpen, onClose }) {
     [lastVerifiedAt],
   );
 
-  if (!isOpen) {
-    return null;
-  }
-
   const handleRedeem = async (event) => {
     event.preventDefault();
 
@@ -121,25 +111,37 @@ function FoundersRedeemModal({ isOpen, onClose }) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[130] flex animate-fade-in items-center justify-center bg-ink/45 px-4 backdrop-blur-sm">
-      <div
-        className="absolute inset-0"
-        role="presentation"
-        onClick={() => {
-          if (!isSubmitting) {
-            onClose();
-          }
-        }}
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="fixed inset-0 z-[130] flex items-center justify-center bg-ink/45 px-4 backdrop-blur-sm"
+        >
+          <div
+            className="absolute inset-0"
+            role="presentation"
+            onClick={() => {
+              if (!isSubmitting) {
+                onClose();
+              }
+            }}
+          />
 
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="founders-redeem-title"
-        tabIndex={-1}
-        className="relative z-10 flex w-full max-w-lg max-h-[90vh] flex-col animate-slide-up overflow-hidden rounded-[28px] border border-line bg-panel shadow-2xl"
-      >
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.98 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="founders-redeem-title"
+            tabIndex={-1}
+            className="relative z-10 flex w-full max-w-xl max-h-[90vh] flex-col overflow-hidden rounded-[28px] border border-line bg-panel shadow-2xl"
+          >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-line/50 p-6 pb-5">
           <div className="flex items-start gap-3">
             <div className="rounded-2xl bg-amber-500/10 p-2.5 text-amber-600 dark:text-amber-300">
@@ -199,7 +201,7 @@ function FoundersRedeemModal({ isOpen, onClose }) {
                       Not redeemed yet
                     </p>
                     <p className="text-xs text-muted">
-                      Your license is checked directly with Gumroad.
+                      Your license is verified directly with Gumroad.
                     </p>
                   </div>
                 </>
@@ -306,7 +308,7 @@ function FoundersRedeemModal({ isOpen, onClose }) {
             </div>
 
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-              {proFeatures.map((feature) => (
+              {PRO_PLAN_FEATURES.map((feature) => (
                 <li
                   key={feature}
                   className="flex items-start gap-2 text-sm text-muted"
@@ -338,7 +340,7 @@ function FoundersRedeemModal({ isOpen, onClose }) {
             </div>
 
             <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-              {founderFeatures.map((feature) => (
+              {FOUNDER_PLAN_FEATURES.map((feature) => (
                 <li
                   key={feature}
                   className="flex items-start gap-2 text-sm text-muted"
@@ -381,9 +383,21 @@ function FoundersRedeemModal({ isOpen, onClose }) {
               </label>
 
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs leading-relaxed text-muted">
-                  Requires internet to verify.
-                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs leading-relaxed text-muted">
+                  <p>
+                    Stored locally on this device and used only to verify with
+                    Gumroad. Internet is required when you verify.
+                  </p>
+                  <a
+                    href={SUPPORT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 font-medium text-muted transition-colors hover:text-ink"
+                  >
+                    <LifeBuoy size={13} />
+                    Need help with your license?
+                  </a>
+                </div>
 
                 <div className="flex items-center gap-2">
                   {isFoundersPackActive ? (
@@ -415,9 +429,21 @@ function FoundersRedeemModal({ isOpen, onClose }) {
             </form>
           ) : (
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs leading-relaxed text-muted">
-                Key stays on this device.
-              </p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs leading-relaxed text-muted">
+                <p>
+                  Your full key is stored locally on this device so you can
+                  verify again later without re-pasting it.
+                </p>
+                <a
+                  href={SUPPORT_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 font-medium text-muted transition-colors hover:text-ink"
+                >
+                  <LifeBuoy size={13} />
+                  Need help with your license?
+                </a>
+              </div>
 
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -460,8 +486,10 @@ function FoundersRedeemModal({ isOpen, onClose }) {
             </div>
           )}
         </div>
-      </div>
-    </div>,
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>,
     document.body,
   );
 }

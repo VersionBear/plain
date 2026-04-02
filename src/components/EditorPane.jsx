@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { Suspense, lazy, useMemo, useRef } from 'react';
 import { useNotesStore } from '../store/useNotesStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import {
@@ -8,14 +8,25 @@ import {
 } from '../store/useFoundersStore';
 import EmptyEditorState from './EmptyEditorState';
 import EditorHeader from './EditorHeader';
-import NoteEditor from './NoteEditor';
 import clsx from 'clsx';
 import { getNoteInsights } from '../utils/noteInsights';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
+const NoteEditor = lazy(() => import('./NoteEditor'));
 
 function formatCount(value) {
   return numberFormatter.format(value);
+}
+
+function NoteEditorFallback() {
+  return (
+    <div className="flex w-full flex-col gap-6 pb-32 sm:gap-8">
+      <div className="h-12 w-2/3 rounded-2xl bg-line/30" />
+      <div className="h-10 w-1/3 rounded-2xl bg-line/25" />
+      <div className="h-[50vh] rounded-3xl bg-line/20" />
+    </div>
+  );
 }
 
 function EditorPane({
@@ -24,6 +35,7 @@ function EditorPane({
   isSidebarCollapsed,
   onToggleSidebar,
   activeSection,
+  onCreateNote,
 }) {
   const notes = useNotesStore((state) => state.notes);
   const trashedNotes = useNotesStore((state) => state.trashedNotes);
@@ -106,6 +118,7 @@ function EditorPane({
           totalNotes={totalNotes}
           searchQuery={searchQuery}
           activeSection={activeSection}
+          onCreateNote={onCreateNote}
         />
       </main>
     );
@@ -120,20 +133,26 @@ function EditorPane({
         activeSection={activeSection}
       />
       <div className="note-print-shell group flex w-full flex-1 justify-center overflow-y-auto">
-        <div
-          className={clsx(
-            'flex w-full justify-center gap-6 relative',
-            showFounderOutline ? 'max-w-[1560px]' : 'max-w-6xl',
-          )}
-        >
-          <div
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={note.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
             className={clsx(
-              'note-print-frame w-full px-6 py-8 sm:px-12 sm:py-12 lg:py-20',
-              isWideMode ? 'max-w-6xl' : 'max-w-4xl',
-              showFounderOutline ? 'xl:max-w-5xl' : '',
-              isWriterMode ? 'font-serif' : '',
+              'flex w-full justify-center gap-6 relative',
+              showFounderOutline ? 'max-w-[1560px]' : 'max-w-6xl',
             )}
           >
+            <div
+              className={clsx(
+                'note-print-frame w-full px-6 py-8 sm:px-12 sm:py-12 lg:py-20',
+                isWideMode ? 'max-w-6xl' : 'max-w-4xl',
+                showFounderOutline ? 'xl:max-w-5xl' : '',
+                isWriterMode ? 'font-serif' : '',
+              )}
+            >
             {showFounderOutline ? (
               <section className="mb-6 rounded-3xl border border-line/80 bg-elevated/70 p-4 shadow-sm xl:hidden">
                 <div className="flex items-center justify-between gap-3">
@@ -178,7 +197,9 @@ function EditorPane({
             ) : null}
 
             <div ref={editorContentRef}>
-              <NoteEditor note={note} isReadOnly={activeSection === 'trash'} />
+              <Suspense fallback={<NoteEditorFallback />}>
+                <NoteEditor note={note} isReadOnly={activeSection === 'trash'} />
+              </Suspense>
             </div>
           </div>
 
@@ -259,7 +280,8 @@ function EditorPane({
               </div>
             </aside>
           ) : null}
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </main>
   );

@@ -47,6 +47,7 @@ export function getLibrarySnapshot(state) {
     index: {
       selectedNoteId: state.selectedNoteId,
       activeSection: state.activeSection,
+      hasInitializedLibrary: state.hasInitializedLibrary,
     },
   };
 }
@@ -73,5 +74,6 @@ export function normalizeLoadedState(
     trashedNotes,
     activeSection,
     selectedNoteId,
+    hasInitializedLibrary: Boolean(library.index.hasInitializedLibrary),
   };
 }

@@ -8,7 +8,7 @@ import {
 } from '../utils/foundersPack';
 import { getPlanTier, hasPlanAccess, PLAN_TIERS } from '../utils/planFeatures';
 
-const defaultPersistedState = {
+export const defaultPersistedFoundersState = {
   productId: PLAIN_PRO_PRODUCT_ID,
   productName: PLAIN_PRO_PRODUCT_NAME,
   licenseKey: '',
@@ -23,6 +23,37 @@ const defaultPersistedState = {
   hasEarlyAccess: false,
 };
 
+export function mergePersistedFoundersState(persistedState = {}) {
+  return {
+    ...defaultPersistedFoundersState,
+    ...(persistedState || {}),
+  };
+}
+
+export function partializeFoundersState(state) {
+  return {
+    productId: state.productId,
+    productName: state.productName,
+    licenseKey: state.licenseKey,
+    maskedLicenseKey: state.maskedLicenseKey,
+    customerName: state.customerName,
+    customerEmail: state.customerEmail,
+    orderNumber: state.orderNumber,
+    purchaseId: state.purchaseId,
+    purchaseTimestamp: state.purchaseTimestamp,
+    lastVerifiedAt: state.lastVerifiedAt,
+    isFoundersPackActive: state.isFoundersPackActive,
+    hasEarlyAccess: state.hasEarlyAccess,
+  };
+}
+
+export function migratePersistedFoundersState(
+  persistedState = {},
+  _version = 0,
+) {
+  return mergePersistedFoundersState(persistedState);
+}
+
 export const selectHasEarlyAccess = (state) => state.hasEarlyAccess;
 export const selectPlanTier = (state) => getPlanTier(state);
 export const selectHasProAccess = (state) =>
@@ -33,13 +64,13 @@ export const selectHasFounderAccess = (state) =>
 export const useFoundersStore = create(
   persist(
     (set, get) => ({
-      ...defaultPersistedState,
+      ...defaultPersistedFoundersState,
       isSubmitting: false,
       errorMessage: '',
       clearError: () => set({ errorMessage: '' }),
       clearFoundersAccess: () =>
         set({
-          ...defaultPersistedState,
+          ...defaultPersistedFoundersState,
           isSubmitting: false,
           errorMessage: '',
         }),
@@ -103,13 +134,12 @@ export const useFoundersStore = create(
     }),
     {
       name: 'plain-founders-pack',
-      partialize: (state) => ({
-        productId: state.productId,
-        productName: state.productName,
-        maskedLicenseKey: state.maskedLicenseKey,
-        lastVerifiedAt: state.lastVerifiedAt,
-        isFoundersPackActive: state.isFoundersPackActive,
-        hasEarlyAccess: state.hasEarlyAccess,
+      version: 2,
+      partialize: partializeFoundersState,
+      migrate: migratePersistedFoundersState,
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...mergePersistedFoundersState(persistedState),
       }),
     },
   ),

@@ -18,6 +18,7 @@ import SearchInput from './SearchInput';
 import TagFilterBar from './TagFilterBar';
 import { useNotesStore } from '../store/useNotesStore';
 import { useOverlayFocus } from '../hooks/useOverlayFocus';
+import { DOCS_URL, PRIVACY_URL, SUPPORT_URL } from '../utils/publicLinks';
 
 function Sidebar({
   notes,
@@ -48,12 +49,10 @@ function Sidebar({
     (state) => state.connectFolderStorage,
   );
   const importLegacyNotes = useNotesStore((state) => state.importLegacyNotes);
-  const handleCreateNote = onCreateNote ?? createNote;
   const currentSectionCount =
     activeSection === 'trash' ? trashedNotesCount : activeNotesCount;
   const isZenMode = useSettingsStore((state) => state.isZenMode);
   const currentYear = new Date().getFullYear();
-  const docsUrl = 'https://docs.plain.versionbear.com/';
   const [isStorageExpanded, setIsStorageExpanded] = useState(false);
   const mobileSidebarRef = useRef(null);
 
@@ -71,26 +70,26 @@ function Sidebar({
 
   const storageLabel = useMemo(() => {
     if (storageStatus.hasFolderConnection) {
-      return 'Folder connected';
+      return 'Folder storage active';
     }
 
     if (storageStatus.supportsFolderPicker) {
-      return 'Browser storage';
+      return 'Browser storage active';
     }
 
-    return 'On-device storage';
+    return 'On-device browser storage';
   }, [storageStatus.hasFolderConnection, storageStatus.supportsFolderPicker]);
 
   const storageCaption = useMemo(() => {
     if (storageStatus.isConnectingFolder) {
-      return 'Connecting to your folder...';
+      return 'Connecting your folder...';
     }
 
     if (
       !storageStatus.hasFolderConnection &&
       storageStatus.hasStoredFolderHandle
     ) {
-      return 'Reconnect your folder to keep working with markdown files on disk';
+      return 'Reconnect your folder to keep notes as Markdown files on disk.';
     }
 
     if (storageStatus.pendingImportCount > 0) {
@@ -98,18 +97,18 @@ function Sidebar({
     }
 
     if (storageStatus.hasFolderConnection) {
-      return 'Saving markdown files to your folder';
+      return 'Notes save to your chosen folder as Markdown files.';
     }
 
     if (storageStatus.isIOS) {
-      return 'Notes are stored in this browser (folder storage not available on iOS)';
+      return 'Notes stay in this browser on this device. Plain has no built-in sync, and iOS does not support folder storage here.';
     }
 
     if (storageStatus.supportsFolderPicker) {
-      return 'Notes stay in this browser until you connect a folder';
+      return 'Notes stay in this browser on this device until you connect a folder or export a backup.';
     }
 
-    return 'Notes are stored locally on this device';
+    return 'Notes stay in browser-managed storage on this device.';
   }, [
     storageStatus.hasFolderConnection,
     storageStatus.hasStoredFolderHandle,
@@ -129,6 +128,15 @@ function Sidebar({
     if (isMobileOpen) {
       onCloseMobile?.();
     }
+  };
+
+  const handleCreateNote = (event) => {
+    if (onCreateNote) {
+      onCreateNote(event.currentTarget);
+      return;
+    }
+
+    createNote();
   };
 
   const sidebarContent = (
@@ -224,32 +232,34 @@ function Sidebar({
             />
           ) : null}
 
-          <div className="rounded-2xl border border-line/80 bg-elevated/60">
-            <div className="flex items-center gap-2 px-3 py-2.5">
-              <div
-                className={clsx(
-                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
-                  storageStatus.hasFolderConnection
-                    ? 'bg-emerald-500/10 text-emerald-500'
-                    : 'bg-line/40 text-muted',
-                )}
-              >
-                {storageStatus.hasFolderConnection ? (
-                  <CheckCircle2 size={15} />
-                ) : (
-                  <HardDrive size={15} />
-                )}
-              </div>
-
+          <div className="rounded-xl border border-line/60 bg-elevated/30">
+            <div className="flex items-center justify-between gap-2 px-3 py-2">
               <button
                 type="button"
                 onClick={() => setIsStorageExpanded((current) => !current)}
-                className="min-w-0 flex-1 text-left"
+                className="group flex min-w-0 flex-1 items-center gap-2.5 text-left"
               >
-                <p className="text-sm font-medium text-ink">{storageLabel}</p>
-                <p className="truncate text-[11px] text-muted">
-                  {storageCaption}
-                </p>
+                {storageStatus.hasFolderConnection ? (
+                  <CheckCircle2
+                    size={14}
+                    className="shrink-0 text-emerald-500"
+                  />
+                ) : (
+                  <HardDrive
+                    size={14}
+                    className="shrink-0 text-muted transition-colors group-hover:text-ink"
+                  />
+                )}
+                <span className="truncate text-xs font-medium text-ink">
+                  {storageLabel}
+                </span>
+                <ChevronDown
+                  size={14}
+                  className={clsx(
+                    'shrink-0 text-muted transition-transform group-hover:text-ink',
+                    isStorageExpanded ? 'rotate-180' : '',
+                  )}
+                />
               </button>
 
               {!storageStatus.hasFolderConnection &&
@@ -258,48 +268,43 @@ function Sidebar({
                   type="button"
                   onClick={() => void connectFolderStorage()}
                   disabled={storageStatus.isConnectingFolder || !isHydrated}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-[11px] font-medium text-canvas transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-md bg-line/40 px-2 py-1 text-[10px] font-medium text-ink transition-colors hover:bg-line/60 disabled:opacity-50"
                 >
-                  <FolderSync size={12} />
+                  <FolderSync size={10} />
                   {storageStatus.isConnectingFolder
                     ? 'Connecting...'
                     : storageStatus.hasStoredFolderHandle
-                      ? 'Reconnect folder'
+                      ? 'Reconnect'
                       : 'Choose folder'}
                 </button>
               ) : null}
-
-              <button
-                type="button"
-                onClick={() => setIsStorageExpanded((current) => !current)}
-                aria-label={
-                  isStorageExpanded
-                    ? 'Collapse storage details'
-                    : 'Expand storage details'
-                }
-                className="rounded-lg p-1.5 text-muted transition-colors hover:bg-line/40 hover:text-ink"
-              >
-                <ChevronDown
-                  size={16}
-                  className={clsx(
-                    'transition-transform',
-                    isStorageExpanded ? 'rotate-180' : '',
-                  )}
-                />
-              </button>
             </div>
 
             {isStorageExpanded ? (
-              <div className="space-y-3 border-t border-line/80 px-3 py-3">
-                <p className="text-xs leading-relaxed text-muted">
-                  {storageStatus.detail}
-                </p>
+              <div className="space-y-3 border-t border-line/60 px-3 py-3">
+                <div>
+                  <p className="text-xs font-medium text-ink">
+                    {storageCaption}
+                  </p>
+                  {storageStatus.detail ? (
+                    <p className="mt-1 text-xs leading-relaxed text-muted">
+                      {storageStatus.detail}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="rounded-xl bg-line/25 px-3 py-2 text-xs leading-relaxed text-muted">
+                  No built-in sync. Browser-only storage stays in this browser
+                  on this device. If you need a copy somewhere else, connect a
+                  folder or export backups regularly.
+                </div>
 
                 {!storageStatus.supportsFolderPicker && (
-                  <div className="flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+                  <div className="flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
                     <Info size={14} className="mt-0.5 shrink-0" />
                     <span>
-                      Folder storage is not available on this device. Your notes are stored securely in this browser.
+                      Folder storage is not available on this device. Notes stay
+                      in this browser, so exports are your clearest backup path.
                     </span>
                   </div>
                 )}
@@ -332,6 +337,25 @@ function Sidebar({
                     </button>
                   </div>
                 ) : null}
+
+                <div className="flex flex-wrap items-center gap-3 text-[11px] font-medium">
+                  <a
+                    href={DOCS_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-muted transition-colors hover:text-ink"
+                  >
+                    Storage guide
+                  </a>
+                  <a
+                    href={SUPPORT_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-muted transition-colors hover:text-ink"
+                  >
+                    Support
+                  </a>
+                </div>
               </div>
             ) : null}
           </div>
@@ -351,12 +375,28 @@ function Sidebar({
         <div className="flex flex-col gap-y-3 text-xs">
           <div className="flex flex-wrap items-center gap-4">
             <a
-              href={docsUrl}
+              href={DOCS_URL}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center font-medium text-muted transition-colors hover:text-ink"
             >
               Documentation
+            </a>
+            <a
+              href={SUPPORT_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center font-medium text-muted transition-colors hover:text-ink"
+            >
+              Support
+            </a>
+            <a
+              href={PRIVACY_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center font-medium text-muted transition-colors hover:text-ink"
+            >
+              Privacy
             </a>
             <button
               type="button"

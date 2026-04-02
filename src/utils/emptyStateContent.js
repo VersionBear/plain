@@ -39,8 +39,8 @@ const dailyTips = [
   },
   {
     eyebrow: 'Tip of the day',
-    title: 'Connect a folder when you want real files on disk.',
-    body: 'Plain works locally out of the box, and folder storage is there when you want markdown files you can manage yourself.',
+    title: 'Connect a folder if you want files on disk.',
+    body: 'Browser-only notes stay in this browser on this device. A folder gives you Markdown files you can manage yourself.',
   },
 ];
 

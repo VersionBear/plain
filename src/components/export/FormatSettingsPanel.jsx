@@ -5,17 +5,23 @@ import {
   useFoundersStore,
 } from '../../store/useFoundersStore';
 
-function Toggle({ enabled, label, onToggle }) {
+function Toggle({ disabled = false, enabled, label, onToggle }) {
   return (
     <button
       type="button"
-      onClick={onToggle}
+      onClick={() => {
+        if (!disabled) {
+          onToggle();
+        }
+      }}
       role="switch"
       aria-checked={enabled}
+      aria-disabled={disabled}
       aria-label={label}
       className={clsx(
         'relative h-6 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30',
         enabled ? 'bg-accent' : 'bg-line',
+        disabled && 'cursor-not-allowed opacity-60',
       )}
     >
       <div
@@ -25,6 +31,20 @@ function Toggle({ enabled, label, onToggle }) {
         )}
       />
     </button>
+  );
+}
+
+function ProFeatureBadge({ hasProAccess }) {
+  return (
+    <span
+      className={clsx(
+        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium',
+        hasProAccess ? 'bg-accent/10 text-accent' : 'bg-line/40 text-muted',
+      )}
+    >
+      {!hasProAccess ? <Lock size={12} /> : null}
+      {hasProAccess ? 'Pro unlocked' : 'Pro feature'}
+    </span>
   );
 }
 
@@ -77,7 +97,7 @@ function FormatSettingsPanel({
           <div>
             <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-ink">
               <Settings2 size={16} className="text-muted" />
-              Export Settings
+              Export settings
             </h4>
             <div className="space-y-3">
               {['png', 'jpeg', 'pdf', 'html'].includes(selectedFormat) ? (
@@ -89,7 +109,7 @@ function FormatSettingsPanel({
                       <Sun size={16} className="text-muted" />
                     )}
                     <div>
-                      <span className="text-sm text-ink">Dark Mode</span>
+                      <span className="text-sm text-ink">Dark theme</span>
                       <p className="text-xs text-muted">
                         Export with dark theme
                       </p>
@@ -177,7 +197,7 @@ function FormatSettingsPanel({
               {selectedFormat === 'markdown' ? (
                 <div className="flex items-center justify-between rounded-xl bg-canvas/30 p-3">
                   <div>
-                    <span className="text-sm text-ink">Include Metadata</span>
+                    <span className="text-sm text-ink">Include metadata</span>
                     <p className="text-xs text-muted">
                       Add frontmatter with ID and timestamps
                     </p>
@@ -196,26 +216,95 @@ function FormatSettingsPanel({
                 </div>
               ) : null}
 
+              {selectedFormat === 'html' ? (
+                <div className="rounded-xl bg-canvas/30 p-3">
+                  <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <span className="text-sm text-ink">
+                        Advanced HTML layout
+                      </span>
+                      <p className="text-xs text-muted">
+                        Tune the title block and reading width for exported
+                        pages.
+                      </p>
+                    </div>
+                    <ProFeatureBadge hasProAccess={hasProAccess} />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between rounded-xl bg-panel/60 px-3 py-3">
+                      <div>
+                        <span className="text-sm text-ink">Include title</span>
+                        <p className="text-xs text-muted">
+                          Keep the note title at the top of the exported page.
+                        </p>
+                      </div>
+                      <Toggle
+                        disabled={!hasProAccess}
+                        enabled={getFormatSetting('includeTitle', true)}
+                        label="Toggle HTML title block"
+                        onToggle={() =>
+                          setFormatSetting(
+                            'html',
+                            'includeTitle',
+                            !getFormatSetting('includeTitle', true),
+                          )
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-[0.12em] text-muted/80">
+                        Page width
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          ['compact', 'Compact'],
+                          ['comfortable', 'Comfort'],
+                          ['full', 'Full'],
+                        ].map(([pageWidth, label]) => (
+                          <button
+                            key={pageWidth}
+                            type="button"
+                            disabled={!hasProAccess}
+                            onClick={() =>
+                              setFormatSetting('html', 'pageWidth', pageWidth)
+                            }
+                            className={clsx(
+                              'rounded-xl border px-3 py-2 text-sm transition-colors',
+                              getFormatSetting('pageWidth', 'comfortable') ===
+                                pageWidth
+                                ? 'border-accent bg-accent/10 text-accent'
+                                : 'border-line bg-canvas text-ink hover:border-line/80',
+                              !hasProAccess &&
+                                'cursor-not-allowed border-line/70 text-muted/70 hover:border-line/70',
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {!hasProAccess ? (
+                    <p className="mt-3 text-xs leading-relaxed text-muted">
+                      Upgrade to Pro to customize HTML export layout.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+
               {selectedFormat === 'pdf' ? (
                 <div className="rounded-xl bg-canvas/30 p-3">
                   <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <span className="text-sm text-ink">Page Layout</span>
+                      <span className="text-sm text-ink">Page layout</span>
                       <p className="text-xs text-muted">
                         Choose the paper size and orientation for PDF export.
                       </p>
                     </div>
-                    <span
-                      className={clsx(
-                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium',
-                        hasProAccess
-                          ? 'bg-accent/10 text-accent'
-                          : 'bg-line/40 text-muted',
-                      )}
-                    >
-                      {!hasProAccess ? <Lock size={12} /> : null}
-                      {hasProAccess ? 'Pro unlocked' : 'Pro feature'}
-                    </span>
+                    <ProFeatureBadge hasProAccess={hasProAccess} />
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -282,6 +371,86 @@ function FormatSettingsPanel({
                     </div>
                   </div>
 
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-[0.12em] text-muted/80">
+                        Margins
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          ['narrow', 'Narrow'],
+                          ['standard', 'Standard'],
+                          ['wide', 'Wide'],
+                        ].map(([margin, label]) => (
+                          <button
+                            key={margin}
+                            type="button"
+                            disabled={!hasProAccess}
+                            onClick={() =>
+                              setFormatSetting('pdf', 'margin', margin)
+                            }
+                            className={clsx(
+                              'rounded-xl border px-3 py-2 text-sm transition-colors',
+                              getFormatSetting('margin', 'standard') === margin
+                                ? 'border-accent bg-accent/10 text-accent'
+                                : 'border-line bg-canvas text-ink hover:border-line/80',
+                              !hasProAccess &&
+                                'cursor-not-allowed border-line/70 text-muted/70 hover:border-line/70',
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between rounded-xl bg-panel/60 px-3 py-3">
+                        <div>
+                          <span className="text-sm text-ink">
+                            Include title
+                          </span>
+                          <p className="text-xs text-muted">
+                            Show the note title at the top of the PDF.
+                          </p>
+                        </div>
+                        <Toggle
+                          disabled={!hasProAccess}
+                          enabled={getFormatSetting('includeTitle', true)}
+                          label="Toggle PDF title block"
+                          onToggle={() =>
+                            setFormatSetting(
+                              'pdf',
+                              'includeTitle',
+                              !getFormatSetting('includeTitle', true),
+                            )
+                          }
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between rounded-xl bg-panel/60 px-3 py-3">
+                        <div>
+                          <span className="text-sm text-ink">Page numbers</span>
+                          <p className="text-xs text-muted">
+                            Add page numbers to multi-page exports.
+                          </p>
+                        </div>
+                        <Toggle
+                          disabled={!hasProAccess}
+                          enabled={getFormatSetting('pageNumbers', false)}
+                          label="Toggle PDF page numbers"
+                          onToggle={() =>
+                            setFormatSetting(
+                              'pdf',
+                              'pageNumbers',
+                              !getFormatSetting('pageNumbers', false),
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {!hasProAccess ? (
                     <p className="mt-3 text-xs leading-relaxed text-muted">
                       Upgrade to Pro to tune PDF layout before exporting.
@@ -297,7 +466,7 @@ function FormatSettingsPanel({
               <div className="flex items-start gap-3">
                 <Settings2 size={16} className="mt-0.5 text-muted" />
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-ink">Export Details</p>
+                  <p className="text-xs font-medium text-ink">Export details</p>
                   <ul className="mt-2 space-y-1 text-xs text-muted">
                     <li>
                       Format: {currentFormat?.label} ({currentFormat?.extension}
@@ -313,6 +482,20 @@ function FormatSettingsPanel({
                     {['png', 'jpeg', 'pdf'].includes(selectedFormat) ? (
                       <li>Scale: {getFormatSetting('scale', 2)}x</li>
                     ) : null}
+                    {selectedFormat === 'html' ? (
+                      <>
+                        <li>
+                          Title:{' '}
+                          {getFormatSetting('includeTitle', true)
+                            ? 'Included'
+                            : 'Hidden'}
+                        </li>
+                        <li className="capitalize">
+                          Page width:{' '}
+                          {getFormatSetting('pageWidth', 'comfortable')}
+                        </li>
+                      </>
+                    ) : null}
                     {selectedFormat === 'pdf' ? (
                       <>
                         <li>
@@ -322,6 +505,21 @@ function FormatSettingsPanel({
                         <li className="capitalize">
                           Orientation:{' '}
                           {getFormatSetting('orientation', 'portrait')}
+                        </li>
+                        <li className="capitalize">
+                          Margins: {getFormatSetting('margin', 'standard')}
+                        </li>
+                        <li>
+                          Title:{' '}
+                          {getFormatSetting('includeTitle', true)
+                            ? 'Included'
+                            : 'Hidden'}
+                        </li>
+                        <li>
+                          Page numbers:{' '}
+                          {getFormatSetting('pageNumbers', false)
+                            ? 'On'
+                            : 'Off'}
                         </li>
                       </>
                     ) : null}

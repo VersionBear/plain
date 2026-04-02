@@ -1,14 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-const defaultSettings = {
+export const defaultExportSettings = {
   darkMode: false,
   includeMetadata: true,
   lastFormat: 'markdown',
   formatSettings: {
     markdown: { includeMetadata: true },
     text: {},
-    html: { darkMode: false },
+    html: {
+      darkMode: false,
+      includeTitle: true,
+      pageWidth: 'comfortable',
+    },
     png: { scale: 2, darkMode: false },
     jpeg: { scale: 2, darkMode: false, quality: 0.95 },
     pdf: {
@@ -16,14 +20,47 @@ const defaultSettings = {
       darkMode: false,
       pageFormat: 'a4',
       orientation: 'portrait',
+      margin: 'standard',
+      includeTitle: true,
+      pageNumbers: false,
     },
   },
 };
 
+export function mergeExportSettings(persistedSettings = {}) {
+  const mergedSettings = {
+    ...defaultExportSettings,
+    ...persistedSettings,
+    formatSettings: {
+      ...defaultExportSettings.formatSettings,
+    },
+  };
+  const persistedFormatSettings = persistedSettings?.formatSettings || {};
+
+  for (const [formatId, formatDefaults] of Object.entries(
+    defaultExportSettings.formatSettings,
+  )) {
+    mergedSettings.formatSettings[formatId] = {
+      ...formatDefaults,
+      ...(persistedFormatSettings[formatId] || {}),
+    };
+  }
+
+  for (const [formatId, formatSettings] of Object.entries(
+    persistedFormatSettings,
+  )) {
+    if (!mergedSettings.formatSettings[formatId]) {
+      mergedSettings.formatSettings[formatId] = formatSettings;
+    }
+  }
+
+  return mergedSettings;
+}
+
 export const useExportStore = create(
   persist(
     (set) => ({
-      settings: defaultSettings,
+      settings: defaultExportSettings,
       isExportModalOpen: false,
       selectedNoteId: null,
       exportProgress: null,
@@ -75,19 +112,12 @@ export const useExportStore = create(
     }),
     {
       name: 'plain-export-settings',
-      version: 2,
+      version: 3,
       partialize: (state) => ({ settings: state.settings }),
       merge: (persistedState, currentState) => ({
         ...currentState,
         ...(persistedState || {}),
-        settings: {
-          ...defaultSettings,
-          ...(persistedState?.settings || {}),
-          formatSettings: {
-            ...defaultSettings.formatSettings,
-            ...(persistedState?.settings?.formatSettings || {}),
-          },
-        },
+        settings: mergeExportSettings(persistedState?.settings),
       }),
     },
   ),

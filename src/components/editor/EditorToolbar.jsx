@@ -6,7 +6,6 @@ import {
   AlignRight,
   Bold,
   CheckSquare,
-  Columns,
   Heading1,
   Heading2,
   Image as ImageIcon,
@@ -14,16 +13,12 @@ import {
   Link as LinkIcon,
   List,
   ListOrdered,
-  PanelLeft,
-  PanelTop,
+  Minus,
   Quote,
-  Rows,
   Strikethrough,
-  Table as TableIcon,
-  Trash,
 } from 'lucide-react';
 
-function ToolbarButton({
+export function ToolbarButton({
   active = false,
   title,
   onClick,
@@ -54,42 +49,14 @@ function ToolbarDivider() {
   return <div className="mx-1 h-6 w-px shrink-0 self-center bg-line" />;
 }
 
-function TableToolbarButton({
-  title,
-  label,
-  onClick,
-  children,
-  danger = false,
-  disabled = false,
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={onClick}
-      aria-label={title}
-      title={title}
-      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:cursor-default disabled:opacity-40 ${
-        danger
-          ? 'text-red-500 hover:bg-red-500/10 focus-visible:ring-red-500/25 dark:text-red-400 dark:hover:bg-red-400/10'
-          : 'text-muted hover:bg-canvas hover:text-ink focus-visible:ring-accent/30'
-      }`}
-    >
-      {children}
-      <span>{label}</span>
-    </button>
-  );
-}
-
 import { useSettingsStore } from '../../store/useSettingsStore';
 import clsx from 'clsx';
+import TableDropdown from './TableDropdown';
 
 function EditorToolbar({
   editor,
   onOpenLink,
   onAddImage,
-  onAddTable,
   isLinkMenuActive,
   linkButtonRef,
 }) {
@@ -111,28 +78,6 @@ function EditorToolbar({
       taskList: currentEditor.isActive('taskList'),
       link: currentEditor.isActive('link'),
       table: currentEditor.isActive('table'),
-      canToggleHeaderRow: currentEditor
-        .can()
-        .chain()
-        .focus()
-        .toggleHeaderRow()
-        .run(),
-      canToggleHeaderColumn: currentEditor
-        .can()
-        .chain()
-        .focus()
-        .toggleHeaderColumn()
-        .run(),
-      canAddRowAfter: currentEditor.can().chain().focus().addRowAfter().run(),
-      canDeleteRow: currentEditor.can().chain().focus().deleteRow().run(),
-      canAddColumnAfter: currentEditor
-        .can()
-        .chain()
-        .focus()
-        .addColumnAfter()
-        .run(),
-      canDeleteColumn: currentEditor.can().chain().focus().deleteColumn().run(),
-      canDeleteTable: currentEditor.can().chain().focus().deleteTable().run(),
     }),
   });
 
@@ -180,6 +125,13 @@ function EditorToolbar({
       active: activeState.quote,
       onClick: () => editor.chain().focus().toggleBlockquote().run(),
       icon: <Quote size={16} />,
+    },
+    {
+      key: 'divider',
+      title: 'Insert Divider',
+      active: false,
+      onClick: () => editor.chain().focus().setHorizontalRule().run(),
+      icon: <Minus size={16} />,
     },
   ];
   const alignmentButtons = [
@@ -233,58 +185,6 @@ function EditorToolbar({
       active: activeState.taskList,
       onClick: () => editor.chain().focus().toggleTaskList().run(),
       icon: <CheckSquare size={16} />,
-    },
-  ];
-  const tableHeaderButtons = [
-    {
-      key: 'header-row',
-      title: 'Toggle Header Row',
-      label: 'Header row',
-      disabled: !activeState.canToggleHeaderRow,
-      onClick: () => editor.chain().focus().toggleHeaderRow().run(),
-      icon: <PanelTop size={14} />,
-    },
-    {
-      key: 'header-column',
-      title: 'Toggle Header Column',
-      label: 'Header col',
-      disabled: !activeState.canToggleHeaderColumn,
-      onClick: () => editor.chain().focus().toggleHeaderColumn().run(),
-      icon: <PanelLeft size={14} />,
-    },
-  ];
-  const tableStructureButtons = [
-    {
-      key: 'add-row',
-      title: 'Add Row After',
-      label: 'Add row',
-      disabled: !activeState.canAddRowAfter,
-      onClick: () => editor.chain().focus().addRowAfter().run(),
-      icon: <Rows size={14} />,
-    },
-    {
-      key: 'delete-row',
-      title: 'Delete Row',
-      label: 'Delete row',
-      disabled: !activeState.canDeleteRow,
-      onClick: () => editor.chain().focus().deleteRow().run(),
-      icon: <Rows size={14} />,
-    },
-    {
-      key: 'add-column',
-      title: 'Add Column After',
-      label: 'Add col',
-      disabled: !activeState.canAddColumnAfter,
-      onClick: () => editor.chain().focus().addColumnAfter().run(),
-      icon: <Columns size={14} />,
-    },
-    {
-      key: 'delete-column',
-      title: 'Delete Column',
-      label: 'Delete col',
-      disabled: !activeState.canDeleteColumn,
-      onClick: () => editor.chain().focus().deleteColumn().run(),
-      icon: <Columns size={14} />,
     },
   ];
 
@@ -354,64 +254,8 @@ function EditorToolbar({
           <ToolbarButton title="Upload Image" onClick={onAddImage}>
             <ImageIcon size={16} />
           </ToolbarButton>
-          <ToolbarButton
-            active={activeState.table}
-            title="Insert Table"
-            onClick={onAddTable}
-          >
-            <TableIcon size={16} />
-          </ToolbarButton>
+          <TableDropdown editor={editor} />
         </div>
-
-        {activeState.table ? (
-          <div className="animate-fade-in border-t border-line/80 px-4 py-2">
-            <div className="flex items-center gap-2 overflow-x-auto">
-              <span className="shrink-0 rounded-full border border-line bg-panel/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-muted">
-                Table tools
-              </span>
-
-              <div className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-panel/80 p-1">
-                {tableHeaderButtons.map((button) => (
-                  <TableToolbarButton
-                    key={button.key}
-                    title={button.title}
-                    label={button.label}
-                    disabled={button.disabled}
-                    onClick={button.onClick}
-                  >
-                    {button.icon}
-                  </TableToolbarButton>
-                ))}
-              </div>
-
-              <div className="flex shrink-0 items-center gap-1 rounded-full border border-line bg-panel/80 p-1">
-                {tableStructureButtons.map((button) => (
-                  <TableToolbarButton
-                    key={button.key}
-                    title={button.title}
-                    label={button.label}
-                    disabled={button.disabled}
-                    onClick={button.onClick}
-                  >
-                    {button.icon}
-                  </TableToolbarButton>
-                ))}
-              </div>
-
-              <div className="flex shrink-0 items-center gap-1 rounded-full border border-red-500/20 bg-red-500/5 p-1">
-                <TableToolbarButton
-                  danger
-                  title="Delete Table"
-                  label="Delete table"
-                  disabled={!activeState.canDeleteTable}
-                  onClick={() => editor.chain().focus().deleteTable().run()}
-                >
-                  <Trash size={14} />
-                </TableToolbarButton>
-              </div>
-            </div>
-          </div>
-        ) : null}
       </div>
     </div>
   );

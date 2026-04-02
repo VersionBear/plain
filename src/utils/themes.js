@@ -1,4 +1,39 @@
-import { hasPlanAccess, PLAN_TIERS } from './planFeatures';
+import { getPlanLabel, hasPlanAccess, PLAN_TIERS } from './planFeatures';
+
+const EASTER_THEME_FREE_PROMO_START = {
+  year: 2026,
+  month: 3,
+  day: 1,
+};
+
+const EASTER_THEME_FREE_PROMO_END = {
+  year: 2026,
+  month: 3,
+  day: 30,
+};
+
+function compareLocalDateParts(date, targetDate) {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  if (year !== targetDate.year) {
+    return year - targetDate.year;
+  }
+
+  if (month !== targetDate.month) {
+    return month - targetDate.month;
+  }
+
+  return day - targetDate.day;
+}
+
+function isWithinLocalDateRange(date, startDate, endDate) {
+  return (
+    compareLocalDateParts(date, startDate) >= 0 &&
+    compareLocalDateParts(date, endDate) <= 0
+  );
+}
 
 export const THEME_OPTIONS = [
   { id: 'light', label: 'Light', preview: ['#ffffff', '#f5f5f5', '#0070f3'] },
@@ -56,6 +91,12 @@ export const THEME_OPTIONS = [
     preview: ['#f1f5fa', '#e8eef6', '#4c76cc'],
   },
   {
+    id: 'easter-bloom',
+    label: 'Easter Bloom',
+    minPlan: PLAN_TIERS.PRO,
+    preview: ['#fff8fb', '#f6efe5', '#f59eaf'],
+  },
+  {
     id: 'rose-paper',
     label: 'Rose Paper',
     minPlan: PLAN_TIERS.FOUNDER,
@@ -78,6 +119,12 @@ export const THEME_OPTIONS = [
     label: 'Porcelain Ink',
     minPlan: PLAN_TIERS.FOUNDER,
     preview: ['#f8f6f2', '#f1ede7', '#5c46c9'],
+  },
+  {
+    id: 'versionbear',
+    label: 'VersionBear',
+    minPlan: PLAN_TIERS.FOUNDER,
+    preview: ['#fff9f5', '#fdf6f1', '#f59e0b'],
   },
 ];
 
@@ -112,30 +159,87 @@ export function isDarkTheme(themeId) {
   return darkThemeIds.has(themeId);
 }
 
-export function hasThemeAccess(themeId, planTier = PLAN_TIERS.FREE) {
+export function isEasterThemeFreePromoActive(currentDate = new Date()) {
+  return isWithinLocalDateRange(
+    currentDate,
+    EASTER_THEME_FREE_PROMO_START,
+    EASTER_THEME_FREE_PROMO_END,
+  );
+}
+
+export function getThemeAccessLabel(
+  themeId,
+  planTier = PLAN_TIERS.FREE,
+  currentDate = new Date(),
+) {
+  const themeOption = themeOptionsById.get(themeId);
+
+  if (!themeOption) {
+    return '';
+  }
+
+  if (
+    themeId === 'easter-bloom' &&
+    planTier === PLAN_TIERS.FREE &&
+    isEasterThemeFreePromoActive(currentDate)
+  ) {
+    return 'Free for April';
+  }
+
+  if (!themeOption.minPlan) {
+    return 'Included';
+  }
+
+  return getPlanLabel(themeOption.minPlan);
+}
+
+export function hasThemeAccess(
+  themeId,
+  planTier = PLAN_TIERS.FREE,
+  currentDate = new Date(),
+) {
   const themeOption = themeOptionsById.get(themeId);
 
   if (!themeOption) {
     return false;
   }
 
+  if (
+    themeId === 'easter-bloom' &&
+    planTier === PLAN_TIERS.FREE &&
+    isEasterThemeFreePromoActive(currentDate)
+  ) {
+    return true;
+  }
+
   return !themeOption.minPlan || hasPlanAccess(planTier, themeOption.minPlan);
 }
 
-export function getVisibleThemes(planTier = PLAN_TIERS.FREE) {
+export function getVisibleThemes(
+  planTier = PLAN_TIERS.FREE,
+  currentDate = new Date(),
+) {
   if (planTier === PLAN_TIERS.FREE) {
-    return THEME_OPTIONS.filter((themeOption) => !themeOption.minPlan);
+    return THEME_OPTIONS.filter(
+      (themeOption) =>
+        !themeOption.minPlan ||
+        hasThemeAccess(themeOption.id, planTier, currentDate),
+    );
   }
 
   return THEME_OPTIONS;
 }
 
-export function resolveThemeForPlan(themeId, planTier = PLAN_TIERS.FREE) {
+export function resolveThemeForPlan(
+  themeId,
+  planTier = PLAN_TIERS.FREE,
+  currentDate = new Date(),
+) {
   if (!isThemeValue(themeId)) {
     return null;
   }
 
-  if (hasThemeAccess(themeId, planTier)) {
+  if (hasThemeAccess(themeId, planTier, currentDate)) {
     return themeId;
   }
 

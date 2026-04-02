@@ -7,6 +7,7 @@ export function createEmptyIndex() {
     version: LIBRARY_VERSION,
     selectedNoteId: null,
     activeSection: 'notes',
+    hasInitializedLibrary: false,
   };
 }
 
@@ -74,6 +75,10 @@ export function normalizeLibrary(snapshot = {}) {
       indexSource.selectedNoteId
         ? indexSource.selectedNoteId
         : null,
+    hasInitializedLibrary:
+      typeof indexSource.hasInitializedLibrary === 'boolean'
+        ? indexSource.hasInitializedLibrary
+        : Boolean(snapshot.index && typeof snapshot.index === 'object'),
   };
 
   return {
@@ -95,5 +100,6 @@ export function serializeIndex(index = {}) {
       typeof index.selectedNoteId === 'string' && index.selectedNoteId
         ? index.selectedNoteId
         : null,
+    hasInitializedLibrary: true,
   };
 }

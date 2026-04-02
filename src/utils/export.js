@@ -81,22 +81,76 @@ function escapeHtml(value = '') {
     .replace(/'/g, '&#39;');
 }
 
+export function resolveHtmlExportOptions(options = {}) {
+  return {
+    darkMode: Boolean(options.darkMode),
+    includeTitle: options.includeTitle !== false,
+    pageWidth:
+      options.pageWidth === 'compact' ||
+      options.pageWidth === 'full' ||
+      options.pageWidth === 'comfortable'
+        ? options.pageWidth
+        : 'comfortable',
+  };
+}
+
+function getHtmlExportMaxWidth(pageWidth = 'comfortable') {
+  switch (pageWidth) {
+    case 'compact':
+      return '720px';
+    case 'full':
+      return 'none';
+    default:
+      return '900px';
+  }
+}
+
+export function resolvePdfExportOptions(options = {}) {
+  return {
+    scale: options.scale ?? 2,
+    darkMode: Boolean(options.darkMode),
+    pageFormat: options.pageFormat === 'letter' ? 'letter' : 'a4',
+    orientation:
+      options.orientation === 'landscape' ? 'landscape' : 'portrait',
+    margin:
+      options.margin === 'narrow' ||
+      options.margin === 'wide' ||
+      options.margin === 'standard'
+        ? options.margin
+        : 'standard',
+    includeTitle: options.includeTitle !== false,
+    pageNumbers: Boolean(options.pageNumbers),
+  };
+}
+
+export function getPdfMarginMm(margin = 'standard') {
+  switch (margin) {
+    case 'narrow':
+      return 8;
+    case 'wide':
+      return 20;
+    default:
+      return 14;
+  }
+}
+
 /**
  * Create a temporary container for rendering export content
  * @param {string} content - HTML content
  * @param {string} title - Note title
- * @param {boolean} darkMode - Whether to use dark mode
+ * @param {Object} options - Render options
  * @returns {HTMLElement} - The temporary container
  */
-function createExportContainer(content, title, darkMode = false) {
+function createExportContainer(content, title, options = {}) {
+  const { darkMode = false, includeTitle = true, width = '1200px' } = options;
   const sanitizedContent = sanitizeExportHtml(content);
   const container = document.createElement('div');
   container.className = 'plain-export-render-container';
   container.style.position = 'fixed';
   container.style.top = '0';
   container.style.left = '-100000px';
-  container.style.width = '1200px';
-  container.style.maxWidth = '1200px';
+  container.style.width = width;
+  container.style.maxWidth = width;
   container.style.padding = '48px';
   container.style.boxSizing = 'border-box';
   container.style.background = darkMode ? '#0a0a0a' : '#ffffff';
@@ -107,7 +161,7 @@ function createExportContainer(content, title, darkMode = false) {
   container.setAttribute('aria-hidden', 'true');
 
   // Add title
-  if (title) {
+  if (includeTitle && title) {
     const titleEl = document.createElement('h1');
     titleEl.textContent = title;
     titleEl.style.fontSize = '32px';
@@ -362,7 +416,26 @@ export function exportNoteAsTxt(note, _options = {}) {
  * @param {ExportOptions} options - Export options
  */
 export async function exportNoteAsHtml(note, options = {}) {
-  const { darkMode = false } = options;
+  const { darkMode, includeTitle, pageWidth } = resolveHtmlExportOptions(
+    options,
+  );
+  const title = note.title || 'Untitled note';
+  const htmlContent = buildHtmlExportDocument(note, {
+    darkMode,
+    includeTitle,
+    pageWidth,
+  });
+
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  downloadBlob(blob, `${getSafeExportName(title)}.html`);
+
+  return { success: true, format: 'html' };
+}
+
+export function buildHtmlExportDocument(note, options = {}) {
+  const { darkMode, includeTitle, pageWidth } = resolveHtmlExportOptions(
+    options,
+  );
   const title = note.title || 'Untitled note';
   let content = sanitizeExportHtml(note.content || '');
   const escapedTitle = escapeHtml(title);
@@ -414,7 +487,7 @@ export async function exportNoteAsHtml(note, options = {}) {
       color: var(--text-color);
       line-height: 1.6;
       padding: 48px;
-      max-width: 900px;
+      max-width: ${getHtmlExportMaxWidth(pageWidth)};
       margin: 0 auto;
     }
     
@@ -556,15 +629,12 @@ export async function exportNoteAsHtml(note, options = {}) {
   </style>
 </head>
 <body>
-  <h1>${escapedTitle}</h1>
+  ${includeTitle ? `<h1>${escapedTitle}</h1>` : ''}
   <div class="content">${content}</div>
 </body>
 </html>`;
 
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-  downloadBlob(blob, `${getSafeExportName(title)}.html`);
-
-  return { success: true, format: 'html' };
+  return htmlContent;
 }
 
 /**
@@ -578,7 +648,7 @@ export async function exportNoteAsPng(note, options = {}) {
   const content = note.content || '';
   const html2canvas = await loadHtml2canvas();
 
-  const container = createExportContainer(content, title, darkMode);
+  const container = createExportContainer(content, title, { darkMode });
 
   try {
     await waitForImagesToLoad(container);
@@ -630,7 +700,7 @@ export async function exportNoteAsJpeg(note, options = {}) {
   const content = note.content || '';
   const html2canvas = await loadHtml2canvas();
 
-  const container = createExportContainer(content, title, darkMode);
+  const container = createExportContainer(content, title, { darkMode });
 
   try {
     await waitForImagesToLoad(container);
@@ -680,10 +750,15 @@ export async function exportNoteAsJpeg(note, options = {}) {
  * @param {ExportOptions} options - Export options
  */
 export async function exportNoteAsPdf(note, options = {}) {
-  const { scale = 2, darkMode = false } = options;
-  const pageFormat = options.pageFormat === 'letter' ? 'letter' : 'a4';
-  const orientation =
-    options.orientation === 'landscape' ? 'landscape' : 'portrait';
+  const {
+    scale,
+    darkMode,
+    pageFormat,
+    orientation,
+    margin,
+    includeTitle,
+    pageNumbers,
+  } = resolvePdfExportOptions(options);
   const title = note.title || 'Untitled note';
   const content = note.content || '';
   const [html2canvas, jsPDF] = await Promise.all([
@@ -691,7 +766,10 @@ export async function exportNoteAsPdf(note, options = {}) {
     loadJsPdf(),
   ]);
 
-  const container = createExportContainer(content, title, darkMode);
+  const container = createExportContainer(content, title, {
+    darkMode,
+    includeTitle,
+  });
 
   try {
     await waitForImagesToLoad(container);
@@ -724,20 +802,54 @@ export async function exportNoteAsPdf(note, options = {}) {
     const imgHeight = canvas.height;
 
     // Use width ratio to maintain readable text size, rather than squishing the whole note onto one page
-    const ratio = pdfWidth / imgWidth;
+    const marginMm = getPdfMarginMm(margin);
+    const usablePdfWidth = pdfWidth - marginMm * 2;
+    const usablePdfHeight = pdfHeight - marginMm * 2;
+
+    const ratio = usablePdfWidth / imgWidth;
     const totalPdfHeight = imgHeight * ratio;
 
     let heightLeft = totalPdfHeight;
-    let position = 0;
+    let position = marginMm;
 
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
-    heightLeft -= pdfHeight;
+    pdf.addImage(
+      imgData,
+      'PNG',
+      marginMm,
+      position,
+      usablePdfWidth,
+      totalPdfHeight,
+    );
+    heightLeft -= usablePdfHeight;
 
     while (heightLeft > 0) {
-      position -= pdfHeight;
+      position -= usablePdfHeight;
       pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
-      heightLeft -= pdfHeight;
+      pdf.addImage(
+        imgData,
+        'PNG',
+        marginMm,
+        position,
+        usablePdfWidth,
+        totalPdfHeight,
+      );
+      heightLeft -= usablePdfHeight;
+    }
+
+    if (pageNumbers) {
+      const totalPages = pdf.internal.getNumberOfPages();
+
+      for (let pageIndex = 1; pageIndex <= totalPages; pageIndex += 1) {
+        pdf.setPage(pageIndex);
+        pdf.setFontSize(9);
+        pdf.setTextColor(darkMode ? 180 : 110);
+        pdf.text(
+          `Page ${pageIndex} of ${totalPages}`,
+          pdfWidth / 2,
+          pdfHeight - Math.max(4, marginMm / 2),
+          { align: 'center' },
+        );
+      }
     }
 
     pdf.save(`${getSafeExportName(title)}.pdf`);
@@ -750,44 +862,6 @@ export async function exportNoteAsPdf(note, options = {}) {
   } finally {
     removeExportContainer(container);
   }
-}
-
-/**
- * Export note as DOCX (stub for now, as real browser DOCX generation requires complex ZIP/XML packing)
- * @param {Object} note - The note object
- * @param {ExportOptions} options - Export options
- */
-export async function exportNoteAsDocx(note, _options = {}) {
-  const title = note.title || 'Untitled note';
-
-  // Fallback stub: In a full app, we would use something like the 'docx' package
-  // For demonstration, we'll download a placeholder text file with the .docx extension
-  const placeholderContent = `DOCX Generation coming soon!\n\nTitle: ${title}\n\nThis is a premium feature placeholder.`;
-  const blob = new Blob([placeholderContent], {
-    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  });
-
-  downloadBlob(blob, `${getSafeExportName(title)}.docx`);
-
-  return { success: true, format: 'docx' };
-}
-
-/**
- * Export note as ePub (stub for now, as real browser ePub generation requires complex ZIP/XML packing)
- * @param {Object} note - The note object
- * @param {ExportOptions} options - Export options
- */
-export async function exportNoteAsEpub(note, _options = {}) {
-  const title = note.title || 'Untitled note';
-
-  // Fallback stub: In a full app, we would use something like jszip and epub-gen-memory
-  // For demonstration, we'll download a placeholder text file with the .epub extension
-  const placeholderContent = `EPUB Generation coming soon!\n\nTitle: ${title}\n\nThis is a premium feature placeholder.`;
-  const blob = new Blob([placeholderContent], { type: 'application/epub+zip' });
-
-  downloadBlob(blob, `${getSafeExportName(title)}.epub`);
-
-  return { success: true, format: 'epub' };
 }
 
 /**
@@ -847,18 +921,6 @@ export async function exportNoteWithProgress(
         onProgress({ stage: 'rendering', progress: 20 });
         result = await exportNoteAsPdf(note, options);
         onProgress({ stage: 'generating', progress: 70 });
-        break;
-
-      case 'docx':
-        onProgress({ stage: 'rendering', progress: 30 });
-        result = await exportNoteAsDocx(note, options);
-        onProgress({ stage: 'generating', progress: 80 });
-        break;
-
-      case 'epub':
-        onProgress({ stage: 'rendering', progress: 30 });
-        result = await exportNoteAsEpub(note, options);
-        onProgress({ stage: 'generating', progress: 80 });
         break;
 
       default:

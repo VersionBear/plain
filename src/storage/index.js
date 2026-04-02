@@ -9,7 +9,7 @@ import { getFileSystemAccessSupport } from '../utils/platform';
 
 export function getStorageCapabilities() {
   const fsSupport = getFileSystemAccessSupport();
-  
+
   return {
     supportsFolderPicker: fsSupport.shouldShowFolderPicker,
     supportsOpfs: supportsOpfsStorage(),
@@ -19,7 +19,7 @@ export function getStorageCapabilities() {
     folderStorageWarning: fsSupport.shouldShowWarning
       ? getFileSystemAccessSupport().isIOS
         ? 'Folder storage is not available on iOS'
-        : 'Folder connections may be less reliable on mobile devices'
+        : 'Folder connections can be less reliable on mobile devices'
       : null,
   };
 }

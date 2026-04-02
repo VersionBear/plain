@@ -1,40 +1,17 @@
 /**
- * Handles page visibility and lifecycle events for PWA state persistence
- * This ensures notes are saved when the app is backgrounded on mobile
+ * Handles page visibility and lifecycle events for PWA state persistence.
+ * The active editor registers a flush callback so we can persist any in-flight
+ * draft changes before the app is backgrounded or unloaded.
  */
 
-import { useNotesStore } from '../store/useNotesStore';
+import { flushActiveEditorDrafts } from './editorDraftRegistry';
 
 let visibilityHandler = null;
 let pageHideHandler = null;
 let beforeUnloadHandler = null;
 
-/**
- * Saves the current state to storage when the page is hidden or about to unload
- * This is critical for mobile PWAs where the app can be backgrounded at any time
- */
-async function saveStateOnBackground() {
-  const state = useNotesStore.getState();
-  
-  // Only save if we have a selected note and the adapter exists
-  if (!state.selectedNoteId || !state.isHydrated) {
-    return;
-  }
-
-  // Trigger a save by updating the note with its current content
-  // The store's mutation system will handle persistence
-  const selectedNote = state.notes.find(n => n.id === state.selectedNoteId);
-  
-  if (selectedNote) {
-    // Force a save by triggering an update with the same content
-    // This ensures any pending changes are persisted
-    useNotesStore.getState().updateNote(state.selectedNoteId, {
-      title: selectedNote.title,
-      content: selectedNote.content,
-      tags: selectedNote.tags,
-      pinned: selectedNote.pinned,
-    }, { skipSaveCheck: true });
-  }
+function flushEditorDraftsForLifecycle(reason) {
+  flushActiveEditorDrafts(reason);
 }
 
 /**
@@ -50,27 +27,28 @@ export function setupVisibilityHandlers() {
   removeVisibilityHandlers();
 
   // Handle visibility change (when app is backgrounded/foregrounded)
-  visibilityHandler = async () => {
+  visibilityHandler = () => {
     if (document.visibilityState === 'hidden') {
-      // App is being backgrounded - save state immediately
-      await saveStateOnBackground();
+      flushEditorDraftsForLifecycle('visibilitychange');
     }
   };
 
   // Handle page hide (more reliable on mobile)
-  pageHideHandler = async () => {
-    await saveStateOnBackground();
+  pageHideHandler = () => {
+    flushEditorDraftsForLifecycle('pagehide');
   };
 
   // Handle before unload (desktop browsers)
-  beforeUnloadHandler = async (_event) => {
-    await saveStateOnBackground();
+  beforeUnloadHandler = () => {
+    flushEditorDraftsForLifecycle('beforeunload');
   };
 
   document.addEventListener('visibilitychange', visibilityHandler);
   window.addEventListener('pagehide', pageHideHandler);
   window.addEventListener('beforeunload', beforeUnloadHandler);
 }
+
+export { flushEditorDraftsForLifecycle };
 
 /**
  * Removes all visibility and lifecycle handlers

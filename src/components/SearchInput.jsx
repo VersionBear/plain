@@ -16,7 +16,7 @@ function SearchInput() {
         value={searchQuery}
         onChange={(event) => setSearchQuery(event.target.value)}
         aria-label="Search notes"
-        placeholder="Search notes"
+        placeholder="Search notes or tags"
         className="block w-full rounded-2xl border border-line bg-canvas py-2.5 pl-9 pr-3 text-base text-ink placeholder-muted/80 transition-shadow focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:text-sm"
       />
     </label>

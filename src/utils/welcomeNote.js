@@ -2,13 +2,19 @@ import { markdownToHtml } from './noteMarkdown';
 import { makeEmptyNote } from './notes';
 
 const welcomeNoteMarkdown = `
-## Local-first, by default
+## Your notes start on this device
 
-Plain keeps your notes on this device first. There is no account required, no mandatory cloud sync, and no hidden workspace to set up before you can write.
+Plain opens fast because it saves here first. There is no account to create and no built-in sync to set up.
 
-- Your note library opens from local storage right away.
-- You can connect a folder later if you want real markdown files on disk.
-- Export stays optional, so you stay in control of your own data.
+- Notes open from this browser on this device.
+- If your browser supports it, you can connect a folder and save Markdown files on disk.
+- If you want a separate backup, export your notes.
+
+## What to trust, and what not to
+
+- Browser-only storage is not a cross-device backup.
+- A connected folder gives you files you can see and manage yourself.
+- Plain can recover a recent in-progress draft after a sudden reload, but that is a safety net, not a backup plan.
 
 ## Try the editor
 
@@ -19,27 +25,27 @@ Use markdown shortcuts like \`#\`, \`##\`, \`-\`, or \`1.\` while you type, or j
 - Add links like [plain text docs](https://example.com)
 - Build structure with headings, lists, quotes, and tables
 
-> Local-first means your notes belong to you before they belong anywhere else.
+> Plain keeps your notes close. You decide when to make another copy.
 
-## Quick checklist
+## First steps
 
 - [x] Opened Plain
-- [ ] Create your next note
+- [ ] Create your first note
 - [ ] Try a heading, a checklist, and a table
-- [ ] Connect a folder if you want files on disk
+- [ ] Connect a folder or export a backup if you want an extra copy
 
-## Tiny example table
+## Storage at a glance
 
 | What | Why it matters |
 | --- | --- |
-| Local storage | Your notes open fast on this device |
-| Folder connection | You can work with real files when you want to |
-| Export tools | PDF, Markdown, text, and more are ready when you are |
+| Browser-only storage | Fast and private on this device |
+| Folder connection | Markdown files on disk that you manage |
+| Export tools | A separate copy for backup or sharing |
 
 ## One more thing
 
 \`\`\`
-Your notes start here.
+Your notes are already saving.
 Delete this welcome note whenever you are ready.
 \`\`\`
 `.trim();
@@ -54,11 +60,13 @@ export function createWelcomeNote() {
 }
 
 export function shouldSeedWelcomeNote(library, pendingLegacyImport = null) {
+  const hasInitializedLibrary = Boolean(library?.index?.hasInitializedLibrary);
   const hasExistingNotes =
-    (library?.notes?.length ?? 0) > 0 || (library?.trashedNotes?.length ?? 0) > 0;
+    (library?.notes?.length ?? 0) > 0 ||
+    (library?.trashedNotes?.length ?? 0) > 0;
   const hasPendingLegacyNotes =
     (pendingLegacyImport?.notes?.length ?? 0) > 0 ||
     (pendingLegacyImport?.trashedNotes?.length ?? 0) > 0;
 
-  return !hasExistingNotes && !hasPendingLegacyNotes;
+  return !hasInitializedLibrary && !hasExistingNotes && !hasPendingLegacyNotes;
 }

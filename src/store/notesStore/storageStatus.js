@@ -1,19 +1,19 @@
 export function getStorageLabel(adapter, capabilities, hasStoredFolderHandle) {
   if (!adapter) {
-    return 'Loading storage';
+    return 'Checking storage';
   }
 
   if (adapter.kind === 'folder') {
-    return 'Stored in folder';
+    return 'Folder storage active';
   }
 
   if (capabilities.supportsFolderPicker && hasStoredFolderHandle) {
-    return 'Folder available';
+    return 'Browser storage active';
   }
 
   return capabilities.supportsFolderPicker
-    ? 'Folder not connected'
-    : 'Stored in browser';
+    ? 'Browser storage active'
+    : 'On-device browser storage';
 }
 
 export function getStorageDescription(
@@ -22,24 +22,24 @@ export function getStorageDescription(
   hasStoredFolderHandle,
 ) {
   if (!adapter) {
-    return 'Opening your notes.';
+    return 'Checking where your notes are stored.';
   }
 
   if (adapter.kind === 'folder') {
-    return 'Notes save into the folder you chose, with deleted notes moved to Trash.';
+    return 'Notes save as Markdown files in your chosen folder. Plain has no built-in sync or account recovery.';
   }
 
   if (adapter.kind === 'opfs') {
     if (capabilities.supportsFolderPicker && hasStoredFolderHandle) {
-      return 'Reconnect your saved notes folder when you want to work with markdown files on disk.';
+      return 'Notes are currently saving in this browser on this device. Reconnect your folder if you want Markdown files on disk again.';
     }
 
     return capabilities.supportsFolderPicker
-      ? 'Notes are safe in browser storage until you connect a real folder.'
-      : 'Notes are stored in browser-managed device storage.';
+      ? 'Notes are saving in this browser on this device until you connect a folder or export a backup.'
+      : 'Notes are saving in browser-managed storage on this device.';
   }
 
-  return 'Notes are stored in local browser storage on this device.';
+  return 'Notes are saving in local browser storage on this device.';
 }
 
 export function buildStorageStatus(
@@ -72,7 +72,7 @@ export function setSyncError(set, error) {
   const message =
     error instanceof Error
       ? error.message
-      : 'Something went wrong while saving your notes.';
+      : 'Plain could not save that change.';
 
   set((state) => ({
     storageStatus: {

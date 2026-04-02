@@ -18,6 +18,7 @@ test('can create, trash, and restore a note', async ({ page }) => {
     .getByRole('button', { name: /create new note/i })
     .first()
     .click();
+  await page.getByRole('button', { name: /blank note/i }).click();
   await page.getByLabel('Note Title').fill('Release checklist');
 
   await expect(
@@ -50,6 +51,7 @@ test('sidebar note list stays scrollable when many notes exist', async ({
 
   for (let index = 0; index < 20; index += 1) {
     await createButton.click();
+    await page.getByRole('button', { name: /blank note/i }).click();
   }
 
   const noteButtons = page.getByRole('button', { name: /select note:/i });
@@ -117,6 +119,7 @@ test.describe('mobile workspace', () => {
       .getByRole('button', { name: /create new note/i })
       .first()
       .click();
+    await page.getByRole('button', { name: /blank note/i }).click();
     await page.getByRole('button', { name: /move note to trash/i }).click();
 
     const sidebar = page.locator('aside[aria-label="Notes sidebar"]');
@@ -130,4 +133,83 @@ test.describe('mobile workspace', () => {
     await page.locator('button[title="View notes"]:visible').click();
     await expect(sidebar).toHaveAttribute('aria-hidden', 'false');
   });
+});
+
+test('locked starter templates route free users to the license dialog', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  await page
+    .getByRole('button', { name: /create new note/i })
+    .first()
+    .click();
+  await page.getByRole('button', { name: /daily note/i }).click();
+
+  await expect(
+    page.getByRole('heading', { name: /activate license/i }),
+  ).toBeVisible();
+});
+
+test('can insert a divider from the editor toolbar', async ({ page }) => {
+  await page.goto('/');
+
+  await page
+    .getByRole('button', { name: /create new note/i })
+    .first()
+    .click();
+  await page.getByRole('button', { name: /blank note/i }).click();
+  await page.getByRole('button', { name: /insert divider/i }).click();
+
+  await expect(page.locator('.ProseMirror hr')).toHaveCount(1);
+});
+
+test('keeps the latest draft when the page reloads before debounce finishes', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  await page
+    .getByRole('button', { name: /create new note/i })
+    .first()
+    .click();
+  await page.getByRole('button', { name: /blank note/i }).click();
+
+  await page.getByLabel('Note Title').fill('Reload draft');
+  await page
+    .locator('.ProseMirror')
+    .pressSequentially('This draft should survive a fast reload.');
+
+  await page.reload();
+
+  await expect(page.getByLabel('Note Title')).toHaveValue('Reload draft');
+  await expect(page.locator('.ProseMirror')).toContainText(
+    'This draft should survive a fast reload.',
+  );
+});
+
+test('keeps the latest draft when switching notes before debounce finishes', async ({
+  page,
+}) => {
+  await page.goto('/');
+
+  const createButton = page
+    .getByRole('button', { name: /create new note/i })
+    .first();
+
+  await createButton.click();
+  await page.getByRole('button', { name: /blank note/i }).click();
+  await page.getByLabel('Note Title').fill('First note');
+  await page
+    .locator('.ProseMirror')
+    .pressSequentially('Unsaved draft before switching.');
+
+  await createButton.click();
+  await page.getByRole('button', { name: /blank note/i }).click();
+  await page.getByLabel('Note Title').fill('Second note');
+
+  await page.getByRole('button', { name: /select note: first note/i }).click();
+  await expect(page.locator('.ProseMirror')).toContainText(
+    'Unsaved draft before switching.',
+  );
 });
