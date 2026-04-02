@@ -10,7 +10,6 @@ storage or sync in this repository.
 - If you do not connect a folder, notes are stored in browser-managed local
   storage on that device.
 - If you connect a folder, notes are written as Markdown files in that folder.
-- Exported files are generated locally in your browser.
 
 ## What leaves the device
 
@@ -28,5 +27,5 @@ storage or sync in this repository.
 
 ## Your responsibility
 
-If you need recovery beyond a single browser/device, connect a folder or export
-regular backups. Browser-only storage is not a cross-device backup.
+If you need recovery beyond a single browser/device, connect a folder on a
+supported browser. Browser-only storage is not a cross-device backup.

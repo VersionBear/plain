@@ -26,7 +26,6 @@ import {
 import { Menu, Plus } from 'lucide-react';
 
 const CreateNoteMenu = lazy(() => import('./components/CreateNoteMenu'));
-const ExportModal = lazy(() => import('./components/ExportModal'));
 const FoundersRedeemModal = lazy(
   () => import('./components/FoundersRedeemModal'),
 );
@@ -189,11 +188,6 @@ function App() {
           onUpgrade={handleOpenFoundersRedeem}
           planTier={planTier}
         />
-      </Suspense>
-
-      {/* Export Modal */}
-      <Suspense fallback={null}>
-        <ExportModal />
       </Suspense>
 
       <Suspense fallback={null}>

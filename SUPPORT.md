@@ -2,17 +2,17 @@
 
 ## Where to start
 
-- Read the repository README for storage, browser-support, and export details.
+- Read the repository README for storage and browser-support details.
 - If you are using browser-only storage, remember that notes stay in that
   browser on that device.
-- If you need a second copy, connect a folder or export your notes.
+- If you need a second copy, connect a folder on a supported browser.
 
 ## Common issues
 
 ### My notes are missing on another device
 
 Plain does not include built-in sync. Browser-only notes stay on the original
-browser and device unless you exported them or connected a folder.
+browser and device unless you connected a folder.
 
 ### Folder storage is unavailable
 

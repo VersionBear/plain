@@ -311,32 +311,8 @@ textarea {
   }
 }
 
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out;
-}
-
-/* Hide export render containers */
-.plain-export-render-container {
-  position: fixed;
-  top: 0;
-  left: -100000px;
-  z-index: -9999;
-  pointer-events: none;
 }
 
 .hairline {
@@ -371,16 +347,9 @@ body.dark .hairline {
   margin-bottom: 0 !important;
 }
 
-.note-prose > :is(p, ul, ol, blockquote, pre, table, figure, hr) + :is(
-    p,
-    ul,
-    ol,
-    blockquote,
-    pre,
-    table,
-    figure,
-    hr
-  ) {
+.note-prose
+  > :is(p, ul, ol, blockquote, pre, table, figure, hr)
+  + :is(p, ul, ol, blockquote, pre, table, figure, hr) {
   margin-top: var(--plain-flow-space) !important;
 }
 
@@ -394,16 +363,9 @@ body.dark .hairline {
   margin-top: 0 !important;
 }
 
-.note-prose > :is(h1, h2, h3, h4, h5, h6) + :is(
-    p,
-    ul,
-    ol,
-    blockquote,
-    pre,
-    table,
-    figure,
-    hr
-  ) {
+.note-prose
+  > :is(h1, h2, h3, h4, h5, h6)
+  + :is(p, ul, ol, blockquote, pre, table, figure, hr) {
   margin-top: var(--plain-heading-follow-space) !important;
 }
 
@@ -812,8 +774,7 @@ ul[data-type='taskList'] li > div {
   header,
   .md\:hidden.shrink-0.border-b,
   button,
-  .editor-toolbar,
-  .plain-export-menu {
+  .editor-toolbar {
     display: none !important;
   }
 

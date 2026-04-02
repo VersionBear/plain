@@ -39,8 +39,8 @@ class ErrorBoundary extends Component {
             </p>
             <p className="mt-3 text-xs leading-relaxed text-muted">
               Plain has no built-in sync or remote recovery service. If this
-              keeps happening, check the storage guide and export a backup when
-              you can.
+              keeps happening, check the storage guide and reconnect your folder
+              if you use one.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <button

@@ -16,7 +16,7 @@ no built-in sync, and no server-side note storage in this repository.
 - Responsive desktop sidebar plus mobile slide-out library
 - Installable PWA shell with an auto-updating service worker
 - Local storage adapters that prefer a real folder when the browser supports it
-- Export to Markdown, TXT, HTML, PNG, JPEG, and paid PDF
+- Export is currently under maintenance
 - Paid tiers for Pro and Founder features
 
 ## Editor Features
@@ -51,14 +51,12 @@ Plain currently has three plan tiers in code:
 - Free
   - Core editor and local-first storage
   - Free themes
-  - Free export formats except PDF
 - Pro
   - Premium themes
   - Writing insights with word count, character count, and read time
   - Starter templates: Daily Note, Meeting Notes, Project Brief, Reading Notes,
     Weekly Review
-  - Advanced PDF controls: page size, orientation, margins, title, page numbers
-  - Advanced HTML export controls: title and page width
+  - Premium workspace extras and layout polish
 - Founder
   - Everything in Pro
   - Interactive outline panel for long notes
@@ -168,7 +166,6 @@ That means:
 - Browser-only storage is not a cross-device backup
 - Connecting a folder is the clearest built-in way to keep real Markdown files
   on disk
-- Export is the manual backup path when you are not using folder storage
 
 Launch-hardening currently in the app:
 
@@ -179,25 +176,8 @@ Launch-hardening currently in the app:
 - The crash screen explicitly points users back to reload, storage docs, and
   support
 
-If you need recovery outside a single browser/device, connect a folder or
-export backups regularly.
-
-## Export
-
-Export formats currently available:
-
-- Markdown
-- Plain Text
-- HTML
-- PNG
-- JPEG
-- PDF
-
-Plan gating:
-
-- PDF is paid
-- Advanced PDF controls are paid
-- Advanced HTML layout controls are paid
+If you need recovery outside a single browser/device, connect a folder on a
+supported browser.
 
 ## Themes
 
@@ -257,7 +237,6 @@ Plain is configured with `vite-plugin-pwa`.
 
 Current launch-readiness performance work in the repo:
 
-- Export libraries remain lazy-loaded
 - The create-note menu is lazy-loaded
 - The heavy note editor path is code-split away from the initial app shell
 - CI enforces a size budget for the main entry bundle with `npm run
@@ -324,7 +303,7 @@ src/
   hooks/        Shared hooks such as theme persistence and overlay focus
   storage/      Folder, OPFS, IndexedDB, and legacy localStorage adapters
   store/        Zustand app state and note actions
-  utils/        Themes, export, plans, storage helpers, notes, and date helpers
+  utils/        Themes, plans, storage helpers, notes, and date helpers
   extensions/   Custom editor extensions
 public/         PWA icons and favicon assets
 scripts/        Repo automation such as bundle budget checks
@@ -342,7 +321,6 @@ tests/          Vitest unit tests and Playwright end-to-end coverage
 - Switch notes immediately after typing and confirm the draft persists
 - Open offline and confirm existing notes still load
 - Connect a folder, reconnect it, and confirm the status copy is accurate
-- Export HTML and PDF from a populated note
 - Redeem a Gumroad license, reload the app, and use `Check again`
 
 ## License

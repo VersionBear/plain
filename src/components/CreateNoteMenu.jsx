@@ -4,10 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { FileText, Lock, Sparkles, X } from 'lucide-react';
 import { useOverlayFocus } from '../hooks/useOverlayFocus';
 import { PLAN_TIERS, getPlanLabel } from '../utils/planFeatures';
-import {
-  NOTE_TEMPLATES,
-  hasTemplateAccess,
-} from '../utils/noteTemplates';
+import { NOTE_TEMPLATES, hasTemplateAccess } from '../utils/noteTemplates';
 
 function CreateNoteMenu({
   isOpen,
@@ -164,11 +161,7 @@ function CreateNoteMenu({
   );
 }
 
-function CreateNoteMenuContent({
-  onCreateBlank,
-  onSelectTemplate,
-  planTier,
-}) {
+function CreateNoteMenuContent({ onCreateBlank, onSelectTemplate, planTier }) {
   return (
     <div className="space-y-4">
       <button
@@ -180,7 +173,9 @@ function CreateNoteMenuContent({
           <FileText size={18} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-ink">Blank note</span>
+          <span className="block text-sm font-semibold text-ink">
+            Blank note
+          </span>
           <span className="mt-1 block text-sm leading-relaxed text-muted">
             Start fresh with an empty title and editor.
           </span>
@@ -253,7 +248,8 @@ function CreateNoteMenuContent({
 
         {planTier === PLAN_TIERS.FREE ? (
           <p className="mt-3 text-xs leading-relaxed text-muted">
-            Upgrade to Pro to unlock starter templates and advanced export controls.
+            Upgrade to Pro to unlock starter templates and premium workspace
+            extras.
           </p>
         ) : null}
       </section>

@@ -105,7 +105,7 @@ function Sidebar({
     }
 
     if (storageStatus.supportsFolderPicker) {
-      return 'Notes stay in this browser on this device until you connect a folder or export a backup.';
+      return 'Notes stay in this browser on this device until you connect a folder.';
     }
 
     return 'Notes stay in browser-managed storage on this device.';
@@ -296,7 +296,7 @@ function Sidebar({
                 <div className="rounded-xl bg-line/25 px-3 py-2 text-xs leading-relaxed text-muted">
                   No built-in sync. Browser-only storage stays in this browser
                   on this device. If you need a copy somewhere else, connect a
-                  folder or export backups regularly.
+                  folder.
                 </div>
 
                 {!storageStatus.supportsFolderPicker && (
@@ -304,7 +304,7 @@ function Sidebar({
                     <Info size={14} className="mt-0.5 shrink-0" />
                     <span>
                       Folder storage is not available on this device. Notes stay
-                      in this browser, so exports are your clearest backup path.
+                      in this browser on this device.
                     </span>
                   </div>
                 )}

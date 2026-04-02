@@ -68,7 +68,7 @@ function EmptyEditorState({
               ? 'This library is saving to your connected folder as Markdown files.'
               : storageStatus?.supportsFolderPicker
                 ? 'Browser-only notes stay in this browser on this device. There is no built-in sync or account recovery.'
-                : 'Notes stay in browser-managed storage on this device. Export backups if you need a copy somewhere else.'}
+                : 'Notes stay in browser-managed storage on this device. Connect a folder on a supported device if you need files on disk.'}
           </p>
         )}
 

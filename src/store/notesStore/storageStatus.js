@@ -35,7 +35,7 @@ export function getStorageDescription(
     }
 
     return capabilities.supportsFolderPicker
-      ? 'Notes are saving in this browser on this device until you connect a folder or export a backup.'
+      ? 'Notes are saving in this browser on this device until you connect a folder.'
       : 'Notes are saving in browser-managed storage on this device.';
   }
 

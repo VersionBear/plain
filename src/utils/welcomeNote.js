@@ -8,7 +8,6 @@ Plain opens fast because it saves here first. There is no account to create and 
 
 - Notes open from this browser on this device.
 - If your browser supports it, you can connect a folder and save Markdown files on disk.
-- If you want a separate backup, export your notes.
 
 ## What to trust, and what not to
 
@@ -32,7 +31,7 @@ Use markdown shortcuts like \`#\`, \`##\`, \`-\`, or \`1.\` while you type, or j
 - [x] Opened Plain
 - [ ] Create your first note
 - [ ] Try a heading, a checklist, and a table
-- [ ] Connect a folder or export a backup if you want an extra copy
+- [ ] Connect a folder if you want Markdown files on disk
 
 ## Storage at a glance
 
@@ -40,7 +39,6 @@ Use markdown shortcuts like \`#\`, \`##\`, \`-\`, or \`1.\` while you type, or j
 | --- | --- |
 | Browser-only storage | Fast and private on this device |
 | Folder connection | Markdown files on disk that you manage |
-| Export tools | A separate copy for backup or sharing |
 
 ## One more thing
 

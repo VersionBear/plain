@@ -4,8 +4,8 @@ export const PRO_PLAN_FEATURES = [
   'Premium themes and palettes',
   'Writing insights with word count, characters, and read time',
   'Starter templates for daily notes, meetings, projects, reading, and weekly reviews',
-  'Advanced PDF layout controls with page size, orientation, margins, title, and page numbers',
-  'Advanced HTML export controls with title and page width',
+  'Layout controls for wider writing and focused reading',
+  'Premium workspace upgrades across themes, templates, and note insights',
 ];
 
 export const FOUNDER_PLAN_FEATURES = [
@@ -44,10 +44,10 @@ export function getPaidExtrasDescription(planTier = PLAN_TIERS.FREE) {
   }
 
   if (planTier === PLAN_TIERS.PRO) {
-    return 'Pro unlocks premium themes, note insights, starter templates, and advanced PDF plus HTML export controls. Founder adds the outline panel and founder-only themes.';
+    return 'Pro unlocks premium themes, note insights, starter templates, and extra workspace polish. Founder adds the outline panel and founder-only themes.';
   }
 
-  return 'Upgrade to Pro for premium themes, note insights, starter templates, and advanced PDF plus HTML export controls. Founder adds the outline panel and founder-only themes.';
+  return 'Upgrade to Pro for premium themes, note insights, starter templates, and extra workspace polish. Founder adds the outline panel and founder-only themes.';
 }
 
 export function getPlanRequirementCopy(requiredPlan = PLAN_TIERS.PRO) {

@@ -1,6 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNotesStore } from '../store/useNotesStore';
-import { useExportStore } from '../store/useExportStore';
 import { formatEditorMeta } from '../utils/date';
 import ConfirmDialog from './common/ConfirmDialog';
 import ViewOptions from './editor/ViewOptions';
@@ -29,11 +28,11 @@ function EditorHeader({
   );
   const togglePinned = useNotesStore((state) => state.togglePinned);
   const storageStatus = useNotesStore((state) => state.storageStatus);
-  const openExportModal = useExportStore((state) => state.openExportModal);
   const isZenMode = useSettingsStore((state) => state.isZenMode);
   const meta = note ? formatEditorMeta(note.createdAt, note.updatedAt) : null;
-  const exportButtonRef = useRef(null);
+  const maintenanceTimeoutRef = useRef(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [exportStatusMessage, setExportStatusMessage] = useState('');
   const saveLocationCopy =
     activeSection === 'trash'
       ? 'Read-only until restored.'
@@ -42,6 +41,26 @@ function EditorHeader({
         : storageStatus.supportsFolderPicker
           ? 'Saves in this browser on this device.'
           : 'Saves in browser-managed storage on this device.';
+
+  useEffect(() => {
+    return () => {
+      if (maintenanceTimeoutRef.current) {
+        window.clearTimeout(maintenanceTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleExportClick = () => {
+    if (maintenanceTimeoutRef.current) {
+      window.clearTimeout(maintenanceTimeoutRef.current);
+    }
+
+    setExportStatusMessage('Export is under maintenance right now.');
+    maintenanceTimeoutRef.current = window.setTimeout(() => {
+      setExportStatusMessage('');
+      maintenanceTimeoutRef.current = null;
+    }, 4000);
+  };
 
   return (
     <>
@@ -86,6 +105,14 @@ function EditorHeader({
               <span className="text-[11px] text-muted/80">
                 {saveLocationCopy}
               </span>
+              {exportStatusMessage ? (
+                <span
+                  aria-live="polite"
+                  className="text-[11px] font-medium text-amber-600 dark:text-amber-300"
+                >
+                  {exportStatusMessage}
+                </span>
+              ) : null}
               {meta ? (
                 <span className="text-[10px] text-muted/70">
                   Updated {meta.updated}
@@ -101,11 +128,10 @@ function EditorHeader({
                   <ViewOptions />
 
                   <button
-                    ref={exportButtonRef}
                     type="button"
-                    title="Export note"
-                    aria-label="Export note"
-                    onClick={() => openExportModal(note.id)}
+                    title="Export note (under maintenance)"
+                    aria-label="Export note (under maintenance)"
+                    onClick={handleExportClick}
                     className="rounded-lg p-2 text-muted transition-colors hover:bg-line/50 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
                   >
                     <Download size={18} />
