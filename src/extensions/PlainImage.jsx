@@ -1,7 +1,14 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react';
-import { AlignCenter, AlignLeft, AlignRight, GripVertical } from 'lucide-react';
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  GripVertical,
+  Maximize2,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import ImageViewer from '../components/editor/ImageViewer';
 
 const DEFAULT_WIDTH = 72;
 const MIN_WIDTH = 30;
@@ -89,6 +96,7 @@ function PlainImageView({ node, updateAttributes, selected, editor }) {
   const commitWidthRef = useRef(() => undefined);
   const [draftWidth, setDraftWidth] = useState(normalizedWidth);
   const [isResizing, setIsResizing] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => {
     setDraftWidth(normalizedWidth);
@@ -263,6 +271,15 @@ function PlainImageView({ node, updateAttributes, selected, editor }) {
               </button>
             ))}
           </div>
+
+          <button
+            type="button"
+            className="plain-image-icon-button"
+            onClick={() => setViewerOpen(true)}
+            title="View fullscreen"
+          >
+            <Maximize2 size={14} />
+          </button>
         </div>
       ) : null}
 
@@ -275,6 +292,8 @@ function PlainImageView({ node, updateAttributes, selected, editor }) {
           alt={alt || caption || 'Image'}
           className="plain-image-element"
           draggable="false"
+          style={{ cursor: 'pointer' }}
+          onClick={() => setViewerOpen(true)}
         />
         {isEditable ? (
           <button
@@ -302,6 +321,15 @@ function PlainImageView({ node, updateAttributes, selected, editor }) {
           )}
         </figcaption>
       ) : null}
+
+      {viewerOpen && (
+        <ImageViewer
+          src={src}
+          alt={alt || caption || 'Image'}
+          caption={caption}
+          onClose={() => setViewerOpen(false)}
+        />
+      )}
     </NodeViewWrapper>
   );
 }

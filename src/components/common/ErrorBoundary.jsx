@@ -1,5 +1,4 @@
 import { Component } from 'react';
-import { DOCS_URL, SUPPORT_URL } from '../../utils/publicLinks';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -39,8 +38,8 @@ class ErrorBoundary extends Component {
             </p>
             <p className="mt-3 text-xs leading-relaxed text-muted">
               Plain has no built-in sync or remote recovery service. If this
-              keeps happening, check the storage guide and reconnect your folder
-              if you use one.
+              keeps happening, check the User Guide note in your library and
+              reconnect your folder if you use one.
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <button
@@ -51,20 +50,12 @@ class ErrorBoundary extends Component {
                 Refresh Plain
               </button>
               <a
-                href={DOCS_URL}
+                href="https://discord.gg/Zq28kBAPZ3"
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-full border border-line px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-line/30 hover:text-ink"
               >
-                Storage guide
-              </a>
-              <a
-                href={SUPPORT_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-full border border-line px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-line/30 hover:text-ink"
-              >
-                Support
+                Join Discord
               </a>
             </div>
           </div>

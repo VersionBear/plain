@@ -1,6 +1,18 @@
+# Build output
 dist/
-coverage/
+
+# Dependencies
 node_modules/
+
+# Test artifacts (if kept)
+coverage/
 playwright-report/
 test-results/
+
+# Package lock
 package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+

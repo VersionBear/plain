@@ -9,6 +9,12 @@ import {
   parseMarkdownToNote,
   serializeNoteToMarkdown,
 } from '../utils/noteMarkdown';
+import {
+  extractImageAssets,
+  resolveImageAssets,
+  saveImageAssets,
+  ensureAssetsDir,
+} from './imageAssets';
 
 function logStorageWarning(message, context = {}) {
   console.warn(`[plain-storage] ${message}`, context);
@@ -29,9 +35,7 @@ function safeJsonParse(text, fallbackValue, context) {
   }
 }
 
-function noteFileName(noteId, extension = '.md') {
-  return `${noteId}${extension}`;
-}
+
 
 async function ensureLibraryDirectories(rootHandle) {
   const notesDir = await rootHandle.getDirectoryHandle(NOTES_DIR_NAME, {
@@ -42,6 +46,10 @@ async function ensureLibraryDirectories(rootHandle) {
   });
 
   return { notesDir, trashDir };
+}
+
+async function getNoteAssetsDir(directoryHandle) {
+  return ensureAssetsDir(directoryHandle);
 }
 
 async function readTextFile(parentHandle, fileName) {
@@ -89,40 +97,56 @@ async function deleteFile(parentHandle, fileName) {
   }
 }
 
-async function readNotesFromDirectory(directoryHandle, options = {}) {
+async function readNotesFromDirectory(directoryHandle, options = {}, idToStem = new Map(), indexMetadata = {}) {
   const notes = [];
+  const assetsDirHandle = await getNoteAssetsDir(directoryHandle).catch(() => null);
 
   for await (const entry of directoryHandle.values()) {
-    if (
-      entry.kind !== 'file' ||
-      (!entry.name.endsWith('.md') && !entry.name.endsWith('.json'))
-    ) {
-      continue;
-    }
+    if (entry.kind !== 'file' || !entry.name.endsWith('.md')) continue;
 
-    const file = await entry.getFile();
-    const text = await file.text();
+    const stem = entry.name.slice(0, -3);
+
     try {
-      const parsed = entry.name.endsWith('.json')
-        ? safeJsonParse(text, null, { fileName: entry.name })
-        : parseMarkdownToNote(text, {
-            fileName: entry.name,
-            lastModified: file.lastModified,
-          });
-      const normalized = normalizeNote(parsed, options);
+      const file = await entry.getFile();
+      const mdText = await file.text();
+
+      let parsedNote = parseMarkdownToNote(mdText, {
+        fileName: entry.name,
+        lastModified: file.lastModified,
+      });
+
+      // Resolve image asset paths back to data URLs
+      if (assetsDirHandle && parsedNote.content) {
+        parsedNote.content = await resolveImageAssets(parsedNote.content, assetsDirHandle);
+      }
+
+      let noteMetadata = {};
+      let foundId = parsedNote.id;
+
+      for (const [id, meta] of Object.entries(indexMetadata)) {
+        if (meta.stem === stem) {
+          foundId = id;
+          noteMetadata = meta;
+          break;
+        }
+      }
+
+      const rawNote = {
+        ...parsedNote,
+        id: foundId,
+        ...noteMetadata
+      };
+
+      const normalized = normalizeNote(rawNote, options);
 
       if (normalized) {
         notes.push(normalized);
+        idToStem.set(normalized.id, stem);
       } else {
-        logStorageWarning('Skipping invalid note file.', {
-          fileName: entry.name,
-        });
+        logStorageWarning('Skipping invalid note file.', { stem });
       }
     } catch (error) {
-      logStorageWarning('Skipping unreadable note file.', {
-        fileName: entry.name,
-        error,
-      });
+      logStorageWarning('Skipping unreadable note pair.', { stem, error });
     }
   }
 
@@ -135,6 +159,8 @@ export function createFileSystemStorage({
   getRootHandle,
 }) {
   let writeQueue = Promise.resolve();
+  const idToStem = new Map();
+  let cachedIndexData = null;
 
   const ensureRootHandle = async () => {
     const rootHandle = await getRootHandle();
@@ -167,23 +193,104 @@ export function createFileSystemStorage({
     const destinationDir = normalizedNote.trashedAt ? trashDir : notesDir;
     const alternateDir = normalizedNote.trashedAt ? notesDir : trashDir;
 
-    // Save as .md
-    const fileName = noteFileName(normalizedNote.id, '.md');
-    // Also look for old .json files to delete if they exist
-    const legacyFileName = noteFileName(normalizedNote.id, '.json');
+    const oldStem = idToStem.get(normalizedNote.id);
+    
+    let baseStem = (normalizedNote.title || 'Untitled')
+      .replace(/[<>:"/\\|?*\n]/g, '-')
+      .replace(/^[.\s]+|[.\s]+$/g, '')
+      .trim();
+      
+    if (!baseStem) {
+      baseStem = 'Untitled';
+    }
 
-    await writeTextFile(
-      destinationDir,
-      fileName,
-      serializeNoteToMarkdown(normalizedNote),
+    let nextStem = baseStem;
+    const isStemInUse = (stem) => {
+      for (const [id, usedStem] of idToStem.entries()) {
+        if (usedStem === stem && id !== normalizedNote.id) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    let counter = 1;
+    while (isStemInUse(nextStem)) {
+      nextStem = `${baseStem} ${counter}`;
+      counter++;
+    }
+
+    const mdFileName = `${nextStem}.md`;
+
+    // Extract base64 images from HTML and replace with relative asset paths
+    const { html: processedContent, assets } = await extractImageAssets(
+      normalizedNote.content,
     );
 
-    // Delete from alternate dir (for both extensions to be safe)
-    await deleteFile(alternateDir, fileName);
-    await deleteFile(alternateDir, legacyFileName);
+    // Create a temporary note with processed content for serialization
+    const noteForSerialization = {
+      ...normalizedNote,
+      content: processedContent,
+    };
 
-    // Clean up legacy file in destination dir if it exists
-    await deleteFile(destinationDir, legacyFileName);
+    // Write the markdown file (now with relative image paths instead of base64)
+    await writeTextFile(
+      destinationDir,
+      mdFileName,
+      serializeNoteToMarkdown(noteForSerialization),
+    );
+
+    // Save extracted image assets to the assets directory
+    const assetsDirHandle = await getNoteAssetsDir(destinationDir);
+    await saveImageAssets(assetsDirHandle, assets, Array.from(assets.keys()));
+
+    idToStem.set(normalizedNote.id, nextStem);
+
+    if (!cachedIndexData) {
+       cachedIndexData = await readJsonFile(rootHandle, INDEX_FILE_NAME, createEmptyIndex());
+    }
+    if (!cachedIndexData.metadata) {
+       cachedIndexData.metadata = {};
+    }
+
+    cachedIndexData.metadata[normalizedNote.id] = {
+      stem: nextStem,
+      title: normalizedNote.title,
+      pinned: Boolean(normalizedNote.pinned),
+      createdAt: normalizedNote.createdAt,
+      updatedAt: normalizedNote.updatedAt,
+      ...(Array.isArray(normalizedNote.tags) && normalizedNote.tags.length > 0
+        ? { tags: normalizedNote.tags }
+        : {}),
+      ...(normalizedNote.trashedAt ? { trashedAt: normalizedNote.trashedAt } : {}),
+    };
+
+    await writeTextFile(
+      rootHandle,
+      INDEX_FILE_NAME,
+      `${JSON.stringify(cachedIndexData, null, 2)}\n`,
+    );
+
+    // Clean up temporary json files if they existed
+    await deleteFile(destinationDir, `${nextStem}.json`);
+
+    // CRITICAL: If we moved folders or renamed, ensure no residual files exist in either directory
+    if (oldStem && oldStem !== nextStem) {
+      await deleteFile(destinationDir, `${oldStem}.md`);
+    }
+    
+    if (oldStem) {
+      await deleteFile(alternateDir, `${oldStem}.md`);
+      await deleteFile(alternateDir, `${oldStem}.json`);
+    }
+
+    if (oldStem !== nextStem) {
+      await deleteFile(alternateDir, `${nextStem}.md`);
+    }
+
+    // Always try to clean up the ID-based json if it exists
+    await deleteFile(alternateDir, `${normalizedNote.id}.json`);
+    await deleteFile(destinationDir, `${normalizedNote.id}.json`);
 
     return normalizedNote;
   };
@@ -191,16 +298,20 @@ export function createFileSystemStorage({
   return {
     kind,
     supportsUserVisibleFolder,
+    getRootHandle: ensureRootHandle,
     async loadLibrary() {
       const rootHandle = await ensureRootHandle();
       const { notesDir, trashDir } = await ensureLibraryDirectories(rootHandle);
-      const [index, notes, trashedNotes] = await Promise.all([
-        readJsonFile(rootHandle, INDEX_FILE_NAME, createEmptyIndex()),
-        readNotesFromDirectory(notesDir, { trashed: false }),
-        readNotesFromDirectory(trashDir, { trashed: true }),
+
+      cachedIndexData = await readJsonFile(rootHandle, INDEX_FILE_NAME, createEmptyIndex());
+      if (!cachedIndexData.metadata) cachedIndexData.metadata = {};
+
+      const [notes, trashedNotes] = await Promise.all([
+        readNotesFromDirectory(notesDir, { trashed: false }, idToStem, cachedIndexData.metadata),
+        readNotesFromDirectory(trashDir, { trashed: true }, idToStem, cachedIndexData.metadata),
       ]);
 
-      return normalizeLibrary({ index, notes, trashedNotes });
+      return normalizeLibrary({ index: cachedIndexData, notes, trashedNotes });
     },
     saveNote(note) {
       return runExclusive(async (rootHandle) => writeNote(rootHandle, note));
@@ -229,19 +340,41 @@ export function createFileSystemStorage({
     deleteNotePermanently(noteId) {
       return runExclusive(async (rootHandle) => {
         const { trashDir } = await ensureLibraryDirectories(rootHandle);
-        await deleteFile(trashDir, noteFileName(noteId, '.md'));
-        await deleteFile(trashDir, noteFileName(noteId, '.json'));
+        const stem = idToStem.get(noteId) || noteId;
+        await deleteFile(trashDir, `${stem}.md`);
+        await deleteFile(trashDir, `${stem}.json`);
+        idToStem.delete(noteId);
+
+        // Note: Full asset cleanup by stem is complex because assets aren't strictly prefixed
+        // but we at least stop deleting everything in the trash assets folder.
+
+        if (cachedIndexData && cachedIndexData.metadata && cachedIndexData.metadata[noteId]) {
+          delete cachedIndexData.metadata[noteId];
+          await writeTextFile(
+            rootHandle,
+            INDEX_FILE_NAME,
+            `${JSON.stringify(cachedIndexData, null, 2)}\n`,
+          );
+        }
       });
     },
     saveIndex(index) {
       return runExclusive(async (rootHandle) => {
         const serializedIndex = serializeIndex(index);
+        
+        if (cachedIndexData) {
+          cachedIndexData = { ...cachedIndexData, ...serializedIndex };
+        } else {
+          cachedIndexData = serializedIndex;
+        }
+        if (!cachedIndexData.metadata) cachedIndexData.metadata = {};
+
         await writeTextFile(
           rootHandle,
           INDEX_FILE_NAME,
-          `${JSON.stringify(serializedIndex, null, 2)}\n`,
+          `${JSON.stringify(cachedIndexData, null, 2)}\n`,
         );
-        return serializedIndex;
+        return cachedIndexData;
       });
     },
   };

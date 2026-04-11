@@ -59,6 +59,7 @@ export function buildStorageStatus(
     hasStoredFolderHandle,
     isHydrating: false,
     isConnectingFolder: false,
+    isRefreshing: false,
     lastError: '',
     pendingImportCount,
     isMobile: capabilities.isMobile ?? false,

@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react';
-import { selectPlanTier, useFoundersStore } from '../store/useFoundersStore';
-import {
-  isDarkTheme,
-  isThemeValue,
-  resolveThemeForPlan,
-  THEME_CLASSES,
-} from '../utils/themes';
+import { isDarkTheme, isThemeValue, THEME_CLASSES } from '../utils/themes';
 
 const storageKey = 'plain-theme';
 
@@ -18,19 +12,8 @@ function readStoredTheme() {
   return isThemeValue(value) ? value : null;
 }
 
-function getSystemTheme() {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-}
-
 function getInitialTheme() {
-  const planTier = selectPlanTier(useFoundersStore.getState());
-  return resolveThemeForPlan(readStoredTheme() || getSystemTheme(), planTier);
+  return readStoredTheme() || 'dark';
 }
 
 function applyTheme(theme) {
@@ -71,29 +54,26 @@ function applyTheme(theme) {
 }
 
 export function useTheme() {
-  const planTier = useFoundersStore(selectPlanTier);
   const [theme, setTheme] = useState(getInitialTheme);
   const [hasStoredPreference, setHasStoredPreference] = useState(() =>
     Boolean(readStoredTheme()),
   );
 
   useEffect(() => {
-    const nextTheme = resolveThemeForPlan(theme, planTier) || 'light';
-
-    if (nextTheme !== theme) {
-      setTheme(nextTheme);
+    if (!isThemeValue(theme)) {
+      setTheme('light');
       return;
     }
 
-    applyTheme(nextTheme);
+    applyTheme(theme);
 
     if (hasStoredPreference) {
-      localStorage.setItem(storageKey, nextTheme);
+      localStorage.setItem(storageKey, theme);
       return;
     }
 
     localStorage.removeItem(storageKey);
-  }, [hasStoredPreference, planTier, theme]);
+  }, [hasStoredPreference, theme]);
 
   useEffect(() => {
     if (hasStoredPreference) {
@@ -110,14 +90,12 @@ export function useTheme() {
   return {
     theme,
     setTheme: (newTheme) => {
-      const nextTheme = resolveThemeForPlan(newTheme, planTier);
-
-      if (!nextTheme) {
+      if (!isThemeValue(newTheme)) {
         return;
       }
 
       setHasStoredPreference(true);
-      setTheme(nextTheme);
+      setTheme(newTheme);
     },
     toggleTheme: () => {
       setHasStoredPreference(true);

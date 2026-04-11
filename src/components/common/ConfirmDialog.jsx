@@ -31,7 +31,7 @@ function ConfirmDialog({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-ink/40 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/35 px-4 backdrop-blur-sm"
         >
           <div className="absolute inset-0" onClick={onClose} />
           <motion.div
@@ -45,7 +45,7 @@ function ConfirmDialog({
             aria-labelledby={titleId}
             aria-describedby={descriptionId}
             tabIndex={-1}
-            className="relative z-10 w-full max-w-md rounded-3xl border border-line bg-panel p-6 shadow-2xl"
+            className="relative z-10 w-full max-w-md rounded-[20px] border border-line/40 bg-panel/95 p-6 shadow-elevated-lg backdrop-blur-xl"
           >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -68,9 +68,9 @@ function ConfirmDialog({
             type="button"
             onClick={onClose}
             aria-label="Close confirmation dialog"
-            className="rounded-lg p-1 text-muted transition-colors hover:bg-line/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted transition-colors hover:bg-line/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 

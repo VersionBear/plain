@@ -5,31 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Plain keeps notes on your device first. No account, no built-in sync, and optional folder storage when your browser supports it."
+      content="Plain — A minimalist, local-first workspace for focused writing. No accounts, no tracking, and total privacy for your notes."
     />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Plain" />
+    <meta property="og:title" content="Plain — Minimalist local-first notes" />
     <meta
       property="og:description"
-      content="Plain keeps notes on your device first. No account, no built-in sync, and optional folder storage when your browser supports it."
+      content="Plain keeps your notes on your device. High-end writing experience with slash commands, markdown, and full privacy."
     />
     <meta property="og:image" content="/embed-image.png" />
     <meta property="og:image:width" content="1456" />
     <meta property="og:image:height" content="703" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Plain" />
+    <meta name="twitter:title" content="Plain — Minimalist local-first notes" />
     <meta
       name="twitter:description"
-      content="Plain keeps notes on your device first. No account, no built-in sync, and optional folder storage when your browser supports it."
+      content="A distraction-free, local-first workspace for your thoughts. Powered by Markdown, owned by you."
     />
     <meta name="twitter:image" content="/embed-image.png" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#000000" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- Preconnect to external resources for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://formshare.ai" />
+    
+    <!-- Preload critical font with display swap for faster text rendering -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
+    
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/app-icon.svg" />
-    <title>Plain | Notes that start on your device</title>
+    <title>Plain — Minimalist, Local-First Notes for Focused Writing</title>
+    
+    <!-- Critical inline CSS for fast initial paint -->
+    <style>
+      /* Minimal critical styles for hydration screen */
+      body{margin:0;font-family:'Inter',system-ui,-apple-system,sans-serif;background:#fff;color:#18181b}
+      .dark body{background:#000;color:#fff}
+    </style>
   </head>
   <body>
     <div id="root"></div>

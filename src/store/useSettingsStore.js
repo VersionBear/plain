@@ -4,22 +4,28 @@ import { persist } from 'zustand/middleware';
 export const useSettingsStore = create(
   persist(
     (set) => ({
-      isWriterMode: false,
-      isZenMode: false,
-      isCompactMode: false,
-      isWideMode: false,
-      isOutlinePanelOpen: true,
+      isOutlinePanelOpen: false,
       showInsightsPill: true,
-      toggleWriterMode: () =>
-        set((state) => ({ isWriterMode: !state.isWriterMode })),
-      toggleZenMode: () => set((state) => ({ isZenMode: !state.isZenMode })),
-      toggleCompactMode: () =>
-        set((state) => ({ isCompactMode: !state.isCompactMode })),
-      toggleWideMode: () => set((state) => ({ isWideMode: !state.isWideMode })),
+      showFormattingToolbar: true,
+      visibleInsights: {
+        words: true,
+        characters: true,
+        readingTime: true,
+        headings: true,
+      },
       toggleOutlinePanel: () =>
         set((state) => ({ isOutlinePanelOpen: !state.isOutlinePanelOpen })),
       toggleInsightsPill: () =>
         set((state) => ({ showInsightsPill: !state.showInsightsPill })),
+      toggleFormattingToolbar: () =>
+        set((state) => ({ showFormattingToolbar: !state.showFormattingToolbar })),
+      toggleVisibleInsight: (key) =>
+        set((state) => ({
+          visibleInsights: {
+            ...state.visibleInsights,
+            [key]: !state.visibleInsights[key],
+          },
+        })),
     }),
     {
       name: 'plain-settings',

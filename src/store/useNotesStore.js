@@ -5,11 +5,20 @@ import {
   getStorageCapabilities,
   hasStoredFolderConnection,
 } from '../storage';
+import { getFolderWatcher, stopFolderWatcher } from '../storage/fileWatcher';
 import {
   createLegacyLocalStorageStorage,
   getLegacyImportSnapshot,
   markLegacyImportComplete,
 } from '../storage/legacyLocalStorage';
+import {
+  useNotificationStore,
+} from './useNotificationStore';
+import { useConflictStore } from './useConflictStore';
+import {
+  detectNoteConflict,
+  parseDiskNote,
+} from './notesStore/conflictResolver';
 import {
   makeEmptyNote,
   normalizeTag,
@@ -18,10 +27,9 @@ import {
   sortTrashedNotes,
 } from '../utils/notes';
 import {
-  createWelcomeNote,
+  createWelcomeNotes,
   shouldSeedWelcomeNote,
 } from '../utils/welcomeNote';
-import { createNoteFromTemplate } from '../utils/noteTemplates';
 import {
   createNoteMutation,
   deleteNotePermanentlyMutation,
@@ -219,20 +227,22 @@ export const useNotesStore = create((set, get) => ({
       }
 
       if (shouldSeedWelcomeNote(library, pendingLegacyImport)) {
-        const welcomeNote = createWelcomeNote();
+        const welcomeNotes = createWelcomeNotes();
         const seededIndex = {
           ...library.index,
           activeSection: 'notes',
-          selectedNoteId: welcomeNote.id,
+          selectedNoteId: welcomeNotes[0].id,
           hasInitializedLibrary: true,
         };
 
         try {
-          await activeStorageAdapter.saveNote(welcomeNote);
+          for (const note of welcomeNotes) {
+            await activeStorageAdapter.saveNote(note);
+          }
           await activeStorageAdapter.saveIndex(seededIndex);
           library = {
             ...library,
-            notes: [welcomeNote],
+            notes: welcomeNotes,
             trashedNotes: [],
             index: seededIndex,
           };
@@ -349,6 +359,163 @@ export const useNotesStore = create((set, get) => ({
       }));
     }
   },
+  async refreshLibrary(options = {}) {
+    const { showNotifications = true, checkConflicts = true } = options;
+
+    if (!activeStorageAdapter || activeStorageAdapter.kind !== 'folder') {
+      if (showNotifications) {
+        useNotificationStore.getState().showWarning(
+          'Refresh is only available when using folder storage.',
+        );
+      }
+      return false;
+    }
+
+    set((state) => ({
+      storageStatus: {
+        ...state.storageStatus,
+        isRefreshing: true,
+        lastError: '',
+      },
+    }));
+
+    try {
+      // Get root handle and read directory to check for conflicts
+      const rootHandle = await activeStorageAdapter.getRootHandle();
+      const notesDir = await rootHandle.getDirectoryHandle('notes', { create: true });
+      
+      // Build a map of current notes by stem (filename without .md)
+      const currentNotesMap = new Map();
+      const currentNotes = get().notes;
+      for (const note of currentNotes) {
+        currentNotesMap.set(note.id, note);
+      }
+
+      // Check for conflicts before loading
+      let conflictsDetected = false;
+
+      if (checkConflicts) {
+        // Load the library once to get the metadata
+        const library = await activeStorageAdapter.loadLibrary();
+        const indexMetadata = library.index?.metadata || {};
+
+        for await (const entry of notesDir.values()) {
+          if (entry.kind !== 'file' || !entry.name.endsWith('.md')) continue;
+
+          try {
+            const file = await entry.getFile();
+            const mdText = await file.text();
+            const diskNote = parseDiskNote(mdText, entry.name, file.lastModified);
+
+            // Try to find matching note by stem in index metadata
+            for (const [id, meta] of Object.entries(indexMetadata)) {
+              if (meta.stem === entry.name.slice(0, -3)) {
+                const appNote = currentNotesMap.get(id);
+                
+                if (appNote) {
+                  const conflict = detectNoteConflict(appNote, {
+                    ...diskNote,
+                    lastModified: file.lastModified,
+                  });
+
+                  if (conflict.hasConflict) {
+                    useConflictStore.getState().setConflict(conflict);
+                    conflictsDetected = true;
+                  }
+                }
+                break;
+              }
+            }
+          } catch {
+            // Skip unreadable files
+          }
+        }
+      }
+
+      // Load the library regardless of conflicts
+      const library = await activeStorageAdapter.loadLibrary();
+      const normalizedState = normalizeLoadedState(
+        library,
+        get().searchQuery,
+        get().activeTag,
+      );
+
+      set({
+        ...normalizedState,
+        storageStatus: {
+          ...buildStatus(activeStorageAdapter),
+          isRefreshing: false,
+        },
+      });
+
+      // Reset the file watcher cache after manual refresh
+      const watcher = getFolderWatcher();
+      watcher.resetCache();
+
+      if (showNotifications && !conflictsDetected) {
+        useNotificationStore.getState().showSuccess('Notes refreshed from folder.');
+      }
+
+      return true;
+    } catch (error) {
+      set((state) => ({
+        storageStatus: {
+          ...state.storageStatus,
+          isRefreshing: false,
+          lastError: error instanceof Error ? error.message : 'Unable to refresh notes.',
+        },
+      }));
+
+      if (showNotifications) {
+        useNotificationStore.getState().showError(
+          error instanceof Error ? error.message : 'Failed to refresh notes.',
+        );
+      }
+
+      return false;
+    }
+  },
+  startFileWatcher() {
+    // Only start watcher if using folder storage
+    if (!activeStorageAdapter || activeStorageAdapter.kind !== 'folder') {
+      return;
+    }
+
+    // Stop any existing watcher
+    stopFolderWatcher();
+
+    const watcher = getFolderWatcher();
+
+    // Get the root handle (it's async)
+    activeStorageAdapter.getRootHandle().then((rootHandle) => {
+      watcher.start(rootHandle, {
+        onChange: async ({ changes: _changes }) => {
+          // Auto-sync silently in the background - just refresh the library
+          // No notification here to avoid spam from the app's own saves
+          const library = await activeStorageAdapter.loadLibrary();
+          const normalizedState = normalizeLoadedState(
+            library,
+            get().searchQuery,
+            get().activeTag,
+          );
+
+          set({
+            ...normalizedState,
+          });
+        },
+        onError: (error) => {
+          useNotificationStore.getState().showError(`File watcher error: ${error.message}`);
+        },
+      }).catch((error) => {
+        useNotificationStore.getState().showError(`Failed to start file watcher: ${error.message}`);
+      });
+    }).catch((error) => {
+      useNotificationStore.getState().showError(`Failed to get folder handle: ${error.message}`);
+    });
+  },
+  stopFileWatcher() {
+    stopFolderWatcher();
+  },
   async importLegacyNotes() {
     if (
       !pendingLegacyImport ||
@@ -435,9 +602,7 @@ export const useNotesStore = create((set, get) => ({
   createNote(options = {}) {
     flushActiveEditorDrafts('create-note');
 
-    const nextNote = options.templateId
-      ? createNoteFromTemplate(options.templateId, options)
-      : makeEmptyNote(options.overrides);
+    const nextNote = makeEmptyNote(options.overrides);
 
     void applyPersistedMutation({
       set,
@@ -599,5 +764,54 @@ export const useNotesStore = create((set, get) => ({
     }
 
     set(result.nextState);
+  },
+  async seedWelcomeNotes() {
+    if (!activeStorageAdapter) return;
+
+    const welcomeNotes = createWelcomeNotes();
+    const state = get();
+    
+    // Only add notes that don't already exist by title in either Notes or Trash
+    const finalNotesToSeed = welcomeNotes.filter(wn => 
+      !state.notes.some(n => n.title === wn.title) &&
+      !state.trashedNotes.some(n => n.title === wn.title)
+    );
+
+    if (finalNotesToSeed.length === 0) {
+      // If the main welcome note already exists, just select it
+      const existingNote = [...state.notes, ...state.trashedNotes].find(n => n.title === 'Welcome to Plain');
+      if (existingNote) {
+        if (existingNote.trashedAt) {
+          useNotificationStore.getState().showWarning('Welcome notes are already in your Trash.');
+          get().setActiveSection('trash');
+        } else {
+          get().setActiveSection('notes');
+        }
+        get().selectNote(existingNote.id);
+      }
+      return;
+    }
+
+    try {
+      for (const note of finalNotesToSeed) {
+        await activeStorageAdapter.saveNote(note);
+      }
+      
+      const newNotes = sortNotes([...state.notes, ...finalNotesToSeed]);
+      set({ 
+        notes: newNotes,
+        selectedNoteId: finalNotesToSeed[0].id,
+        activeSection: 'notes',
+        activeTag: ''
+      });
+      
+      await persistIndexSnapshot(set, get);
+      // Force a library refresh to ensure sync
+      await get().refreshLibrary({ showNotifications: false, checkConflicts: false });
+      
+      useNotificationStore.getState().showSuccess('Welcome notes restored.');
+    } catch (error) {
+      setSyncError(set, error);
+    }
   },
 }));

@@ -1,19 +1,27 @@
 import { Suspense, lazy, useMemo, useRef } from 'react';
 import { useNotesStore } from '../store/useNotesStore';
 import { useSettingsStore } from '../store/useSettingsStore';
-import {
-  selectHasFounderAccess,
-  selectHasProAccess,
-  useFoundersStore,
-} from '../store/useFoundersStore';
 import EmptyEditorState from './EmptyEditorState';
 import EditorHeader from './EditorHeader';
+import OutlinePanel from './OutlinePanel';
 import clsx from 'clsx';
 import { getNoteInsights } from '../utils/noteInsights';
 import { AnimatePresence, motion } from 'framer-motion';
+import { X } from 'lucide-react';
 
 const numberFormatter = new Intl.NumberFormat('en-US');
-const NoteEditor = lazy(() => import('./NoteEditor'));
+
+// Dynamically import heavy editor only when needed, with priority for desktop
+const NoteEditor = lazy(() =>
+  import('./NoteEditor').then((module) => {
+    // Preload table menus for better UX
+    import('./editor/TableEdgeMenu');
+    import('./editor/TableBubbleMenu');
+    import('./editor/MobileTableMenu');
+    import('./editor/FormattingBubbleMenu');
+    return module;
+  })
+);
 
 function formatCount(value) {
   return numberFormatter.format(value);
@@ -21,10 +29,10 @@ function formatCount(value) {
 
 function NoteEditorFallback() {
   return (
-    <div className="flex w-full flex-col gap-6 pb-32 sm:gap-8">
-      <div className="h-12 w-2/3 rounded-2xl bg-line/30" />
-      <div className="h-10 w-1/3 rounded-2xl bg-line/25" />
-      <div className="h-[50vh] rounded-3xl bg-line/20" />
+    <div className="flex w-full flex-col gap-6 pb-32 sm:gap-8 animate-pulse">
+      <div className="h-11 w-2/3 rounded-2xl bg-line/20" />
+      <div className="h-8 w-1/4 rounded-xl bg-line/15" />
+      <div className="h-[50vh] rounded-2xl bg-line/10" />
     </div>
   );
 }
@@ -40,14 +48,14 @@ function EditorPane({
   const notes = useNotesStore((state) => state.notes);
   const trashedNotes = useNotesStore((state) => state.trashedNotes);
   const selectedNoteId = useNotesStore((state) => state.selectedNoteId);
-  const hasProAccess = useFoundersStore(selectHasProAccess);
-  const hasFounderAccess = useFoundersStore(selectHasFounderAccess);
-  const isWriterMode = useSettingsStore((state) => state.isWriterMode);
-  const isWideMode = useSettingsStore((state) => state.isWideMode);
   const isOutlinePanelOpen = useSettingsStore(
     (state) => state.isOutlinePanelOpen,
   );
+  const toggleOutlinePanel = useSettingsStore(
+    (state) => state.toggleOutlinePanel,
+  );
   const showInsightsPill = useSettingsStore((state) => state.showInsightsPill);
+  const visibleInsights = useSettingsStore((state) => state.visibleInsights);
   const currentNotes = activeSection === 'trash' ? trashedNotes : notes;
   const editorContentRef = useRef(null);
   const note = useMemo(
@@ -56,9 +64,8 @@ function EditorPane({
   );
   const insights = useMemo(() => (note ? getNoteInsights(note) : null), [note]);
 
-  const showFounderOutline = Boolean(
+  const showOutline = Boolean(
     note &&
-    hasFounderAccess &&
     isOutlinePanelOpen &&
     insights &&
     insights.headingCount > 0,
@@ -67,26 +74,26 @@ function EditorPane({
   const statItems = insights
     ? [
         {
+          key: 'words',
           label: 'Words',
           value: formatCount(insights.wordCount),
         },
         {
+          key: 'characters',
           label: 'Characters',
           value: formatCount(insights.characterCount),
         },
         {
+          key: 'readingTime',
           label: 'Reading time',
           value: insights.readingTimeMinutes,
         },
-        ...(hasFounderAccess
-          ? [
-              {
-                label: 'Headings',
-                value: formatCount(insights.headingCount),
-              },
-            ]
-          : []),
-      ]
+        {
+          key: 'headings',
+          label: 'Headings',
+          value: formatCount(insights.headingCount),
+        },
+      ].filter(item => visibleInsights?.[item.key] !== false)
     : [];
 
   const jumpToHeading = (headingIndex) => {
@@ -101,13 +108,19 @@ function EditorPane({
 
     heading.scrollIntoView({
       behavior: 'smooth',
-      block: 'center',
+      block: 'start',
     });
   };
 
   if (!note) {
     return (
-      <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
+      <main
+        className={clsx(
+          "relative flex min-w-0 flex-1 flex-col bg-canvas overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+          "md:my-3 md:mr-3 md:rounded-[2rem] md:border md:border-line/40 md:shadow-2xl",
+          isSidebarCollapsed ? "md:ml-3" : "md:ml-0"
+        )}
+      >
         <EditorHeader
           note={null}
           isSidebarCollapsed={isSidebarCollapsed}
@@ -125,7 +138,13 @@ function EditorPane({
   }
 
   return (
-    <main className="relative flex min-w-0 flex-1 flex-col bg-canvas">
+    <main
+      className={clsx(
+        "relative flex min-w-0 flex-1 flex-col bg-canvas overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+        "md:my-3 md:mr-3 md:rounded-[2rem] md:border md:border-line/40 md:shadow-2xl",
+        isSidebarCollapsed ? "md:ml-3" : "md:ml-0"
+      )}
+    >
       <EditorHeader
         note={note}
         isSidebarCollapsed={isSidebarCollapsed}
@@ -136,66 +155,21 @@ function EditorPane({
         <AnimatePresence mode="wait">
           <motion.div
             key={note.id}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             className={clsx(
               'flex w-full justify-center gap-6 relative',
-              showFounderOutline ? 'max-w-[1560px]' : 'max-w-6xl',
+              showOutline ? 'max-w-[1560px]' : 'max-w-6xl',
             )}
           >
             <div
               className={clsx(
-                'note-print-frame w-full px-6 py-8 sm:px-12 sm:py-12 lg:py-20',
-                isWideMode ? 'max-w-6xl' : 'max-w-4xl',
-                showFounderOutline ? 'xl:max-w-5xl' : '',
-                isWriterMode ? 'font-serif' : '',
+                'note-print-frame w-full px-6 py-8 sm:px-10 sm:py-12 lg:py-20 max-w-[820px]',
+                showOutline ? 'xl:max-w-[880px]' : '',
               )}
             >
-            {showFounderOutline ? (
-              <section className="mb-6 rounded-3xl border border-line/80 bg-elevated/70 p-4 shadow-sm xl:hidden">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                      Founder outline
-                    </p>
-                    <p className="mt-1 text-sm text-muted">
-                      Jump through long notes from one place.
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-line/40 px-3 py-1 text-xs font-medium text-muted">
-                    {insights.headingCount} headings
-                  </span>
-                </div>
-
-                <div className="mt-4 max-h-56 space-y-1.5 overflow-y-auto pr-1">
-                  {insights.headings.map((heading, index) => (
-                    <button
-                      key={`${heading.level}-${heading.text}-${index}`}
-                      type="button"
-                      onClick={() => jumpToHeading(index)}
-                      className={clsx(
-                        'flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-line/40 hover:text-ink',
-                        heading.level >= 4
-                          ? 'pl-7'
-                          : heading.level === 3
-                            ? 'pl-5'
-                            : heading.level === 2
-                              ? 'pl-4'
-                              : '',
-                      )}
-                    >
-                      <span className="rounded-full bg-line/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted/80">
-                        H{heading.level}
-                      </span>
-                      <span className="truncate">{heading.text}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
             <div ref={editorContentRef}>
               <Suspense fallback={<NoteEditorFallback />}>
                 <NoteEditor note={note} isReadOnly={activeSection === 'trash'} />
@@ -203,27 +177,27 @@ function EditorPane({
             </div>
           </div>
 
-          {hasProAccess && activeSection === 'notes' && showInsightsPill ? (
+          {activeSection === 'notes' && showInsightsPill ? (
             <div
               className={clsx(
                 'pointer-events-none fixed bottom-0 right-0 z-[60] p-4 transition-all duration-300 sm:p-6 lg:p-8',
-                showFounderOutline ? 'xl:right-72' : '',
+                showOutline ? 'xl:right-72' : '',
               )}
             >
-              <div className="pointer-events-auto ml-auto flex max-w-fit items-center gap-2.5 rounded-full border border-line/40 bg-panel/90 px-4 py-2 text-[11px] shadow-sm backdrop-blur-md sm:gap-4 sm:px-5 sm:text-xs">
+              <div className="pointer-events-auto ml-auto flex max-w-fit items-center gap-2.5 rounded-full border border-line/30 bg-panel/90 px-4 py-2 text-[11px] shadow-panel backdrop-blur-xl sm:gap-4 sm:px-5 sm:text-xs">
                 <div className="flex items-center gap-3 sm:gap-4">
                   {statItems.map((item) => (
                     <div key={item.label} className="flex items-baseline gap-1">
                       <span className="font-medium text-ink">{item.value}</span>
                       <span className="text-muted sm:hidden">
-                        {item.label === 'Reading time' ? 'm' : item.label.toLowerCase().slice(0, 1)}
+                        {item.label === 'Reading time' ? 'min' : item.label === 'Words' ? 'w' : item.label === 'Characters' ? 'ch' : item.label === 'Headings' ? 'h' : item.label.slice(0, 2)}
                       </span>
                       <span className="hidden text-muted sm:inline-block">
                         {item.label === 'Reading time' ? 'min' : item.label.toLowerCase()}
                       </span>
                     </div>
                   ))}
-                  {showFounderOutline ? (
+                  {showOutline ? (
                     <>
                       <div className="h-3.5 w-px bg-line/60" />
                       <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-accent sm:px-2.5">
@@ -236,53 +210,64 @@ function EditorPane({
             </div>
           ) : null}
 
-          {showFounderOutline ? (
+          {showOutline ? (
             <aside className="hidden w-72 shrink-0 pt-20 xl:block">
-              <div className="sticky top-24 rounded-3xl border border-line/80 bg-panel/90 p-4 shadow-sm backdrop-blur">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
-                      Founder outline
-                    </p>
-                    <p className="mt-1 text-sm text-muted">
-                      Jump through long notes without losing your place.
-                    </p>
-                  </div>
-                  <span className="rounded-full bg-line/40 px-3 py-1 text-xs font-medium text-muted">
-                    {insights.headingCount}
-                  </span>
-                </div>
-
-                <div className="mt-4 max-h-[calc(100vh-12rem)] space-y-1.5 overflow-y-auto pr-1">
-                  {insights.headings.map((heading, index) => (
-                    <button
-                      key={`${heading.level}-${heading.text}-${index}`}
-                      type="button"
-                      onClick={() => jumpToHeading(index)}
-                      className={clsx(
-                        'flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-line/40 hover:text-ink',
-                        heading.level >= 4
-                          ? 'pl-7'
-                          : heading.level === 3
-                            ? 'pl-5'
-                            : heading.level === 2
-                              ? 'pl-4'
-                              : '',
-                      )}
-                    >
-                      <span className="rounded-full bg-line/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted/80">
-                        H{heading.level}
-                      </span>
-                      <span className="truncate">{heading.text}</span>
-                    </button>
-                  ))}
-                </div>
+              <div className="sticky top-24 rounded-2xl border border-line/30 bg-panel/80 p-4 shadow-sm backdrop-blur-xl">
+                <OutlinePanel 
+                  insights={insights} 
+                  onJumpToHeading={jumpToHeading}
+                  listClassName="max-h-[calc(100vh-12rem)]"
+                />
               </div>
             </aside>
           ) : null}
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Mobile/Tablet Slide-in Outline */}
+      <AnimatePresence>
+        {showOutline && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={toggleOutlinePanel}
+              className="fixed inset-0 z-[60] bg-ink/5 backdrop-blur-[2px] xl:hidden"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 right-0 top-0 z-[70] flex w-72 max-w-[85vw] flex-col rounded-l-2xl border-l border-line/30 bg-panel/95 p-4 shadow-2xl backdrop-blur-xl xl:hidden"
+            >
+              <div className="mb-4 flex items-center justify-between pl-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  Outline Panel
+                </p>
+                <button
+                  type="button"
+                  onClick={toggleOutlinePanel}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl text-muted/70 transition-colors hover:bg-line/40 hover:text-ink"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <OutlinePanel
+                insights={insights}
+                onJumpToHeading={(idx) => {
+                  jumpToHeading(idx);
+                  toggleOutlinePanel(); // auto-close on mobile after jumping
+                }}
+                listClassName="flex-1 pb-10"
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </main>
   );
 }
