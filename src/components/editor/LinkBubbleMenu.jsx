@@ -9,12 +9,45 @@ import {
   Copy,
   Link as LinkIcon 
 } from 'lucide-react';
+import clsx from 'clsx';
 
+function getIsMobile() {
+  if (typeof window === 'undefined') return false;
+  const isNarrow = window.innerWidth < 768;
+  const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+  return isNarrow || isCoarse;
+}
 
 function LinkBubbleMenu({ editor }) {
   const [isEditing, setIsEditing] = useState(false);
   const [url, setUrl] = useState('');
+  const [isMobile, setIsMobile] = useState(getIsMobile);
   const inputRef = useRef(null);
+  const tippyRef = useRef(null);
+
+  // ── Mobile detection: re-evaluate on resize and pointer changes ──
+  useEffect(() => {
+    const check = () => setIsMobile(getIsMobile());
+    window.addEventListener('resize', check);
+    const mql = window.matchMedia('(pointer: coarse)');
+    mql.addEventListener?.('change', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      mql.removeEventListener?.('change', check);
+    };
+  }, []);
+
+  // ── Mobile: hide on scroll ──
+  useEffect(() => {
+    if (!isMobile) return;
+    const hide = () => tippyRef.current?.hide();
+    document.addEventListener('touchmove', hide, { passive: true });
+    window.visualViewport?.addEventListener('resize', hide);
+    return () => {
+      document.removeEventListener('touchmove', hide);
+      window.visualViewport?.removeEventListener('resize', hide);
+    };
+  }, [isMobile]);
 
   const isLinkActive = editor.isActive('link');
 
@@ -91,11 +124,40 @@ function LinkBubbleMenu({ editor }) {
       shouldShow={shouldShow}
       tippyOptions={{
         duration: 150,
-        placement: 'bottom-start',
-        offset: [0, 8],
+        placement: isMobile ? 'top' : 'bottom-start',
+        offset: isMobile ? [0, 10] : [0, 8],
         zIndex: 110,
+        // On mobile, anchor to bottom of viewport
+        ...(isMobile
+          ? {
+              getReferenceClientRect: () => {
+                const viewport = window.visualViewport;
+                const width = viewport ? viewport.width : window.innerWidth;
+                const height = viewport ? viewport.height : window.innerHeight;
+                return {
+                  width: 0,
+                  height: 0,
+                  left: width / 2,
+                  right: width / 2,
+                  top: height,
+                  bottom: height,
+                  x: width / 2,
+                  y: height,
+                };
+              },
+            }
+          : {}),
+        onCreate(instance) {
+          tippyRef.current = instance;
+        },
+        onDestroy() {
+          tippyRef.current = null;
+        },
       }}
-      className="flex items-center gap-1 overflow-hidden rounded-[14px] border border-line/40 bg-panel/95 p-1 px-1.5 shadow-floating backdrop-blur-xl"
+      className={clsx(
+        "flex items-center gap-1 overflow-hidden rounded-[14px] border border-line/40 bg-panel/95 p-1 px-1.5 shadow-floating backdrop-blur-xl",
+        isMobile && "fixed-mobile-bar"
+      )}
     >
       {isEditing ? (
         <div className="flex items-center gap-1 min-w-[280px]">

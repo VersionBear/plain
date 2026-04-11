@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -45,6 +45,31 @@ function Sidebar({
     containerRef: mobileSidebarRef,
     onClose: onCloseMobile,
   });
+
+  const [isFormshareDefined, setIsFormshareDefined] = useState(() =>
+    Boolean(window.customElements.get('formshare-launch-button')),
+  );
+
+  useEffect(() => {
+    if (isFormshareDefined) return;
+
+    window.customElements
+      .whenDefined('formshare-launch-button')
+      .then(() => setIsFormshareDefined(true))
+      .catch(() => {});
+  }, [isFormshareDefined]);
+
+  const formshareRef = useRef(null);
+
+  useEffect(() => {
+    if (isFormshareDefined && formshareRef.current) {
+      // Set attributes after the element is connected to the DOM
+      // to avoid a crash in the third-party script's attributeChangedCallback
+      // where it tries to access an internal container that isn't created until connectedCallback.
+      formshareRef.current.setAttribute('href', 'https://formshare.ai/s/o9wz926YRe');
+      formshareRef.current.setAttribute('type', 'modal');
+    }
+  }, [isFormshareDefined]);
 
   const showTagFilters =
     activeSection === 'notes' &&
@@ -231,15 +256,29 @@ function Sidebar({
             >
               Discord
             </a>
-            <formshare-launch-button href="https://formshare.ai/s/o9wz926YRe" type="modal">
-              <button
-                type="button"
+            {isFormshareDefined ? (
+              <formshare-launch-button
+                ref={formshareRef}
+              >
+                <button
+                  type="button"
+                  title="Leave a review!"
+                  className="inline-flex items-center rounded-lg px-2.5 py-1.5 font-bold tracking-tight text-muted/70 transition-all hover:bg-elevated hover:text-ink hover:shadow-sm"
+                >
+                  Review
+                </button>
+              </formshare-launch-button>
+            ) : (
+              <a
+                href="https://formshare.ai/s/o9wz926YRe"
+                target="_blank"
+                rel="noreferrer"
                 title="Leave a review!"
                 className="inline-flex items-center rounded-lg px-2.5 py-1.5 font-bold tracking-tight text-muted/70 transition-all hover:bg-elevated hover:text-ink hover:shadow-sm"
               >
                 Review
-              </button>
-            </formshare-launch-button>
+              </a>
+            )}
           </div>
           <div className="font-mono text-[10px] uppercase tracking-widest text-muted/30">
             &copy; {currentYear} Plain

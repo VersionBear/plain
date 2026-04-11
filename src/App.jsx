@@ -92,15 +92,20 @@ function App() {
 
     // Load Formshare widget script dynamically after hydration
     // to prevent it from crashing when DOM elements are not yet ready.
-    const script = document.createElement('script');
-    script.src = 'https://formshare.ai/embed/v1.js';
-    script.async = true;
-    document.body.appendChild(script);
+    const SCRIPT_URL = 'https://formshare.ai/embed/v1.js';
+    let script = document.querySelector(`script[src="${SCRIPT_URL}"]`);
+
+    if (!script) {
+      script = document.createElement('script');
+      script.src = SCRIPT_URL;
+      script.async = true;
+      document.body.appendChild(script);
+    }
 
     return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
+      // We don't remove the script to avoid re-initializing the custom element 
+      // if the component unmounts/remounts, but we could if we wanted 
+      // strict cleanup. Given it's App.jsx, it only unmounts on page exit.
     };
   }, [isHydrated]);
 

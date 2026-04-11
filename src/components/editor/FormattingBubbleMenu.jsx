@@ -44,7 +44,7 @@ function FormattingBubbleMenu({ editor }) {
     };
   }, []);
 
-  // ── Mobile: hide bubble on scroll/touchmove and virtual-keyboard open ──
+  // ── Mobile: hide bubble on scroll/touchmove ──
   useEffect(() => {
     if (!isMobile) return;
 
@@ -54,6 +54,8 @@ function FormattingBubbleMenu({ editor }) {
     };
 
     document.addEventListener('touchmove', hide, { passive: true });
+    // On mobile, we might NOT want to hide on visualViewport resize if we are anchoring to it,
+    // but usually, it's safer to hide when the keyboard/orientation changes significantly.
     window.visualViewport?.addEventListener('resize', hide);
 
     return () => {
@@ -177,14 +179,34 @@ function FormattingBubbleMenu({ editor }) {
       shouldShow={shouldShow}
       tippyOptions={{
         duration: 150,
-        // Desktop: float above selection · Mobile: sit below to avoid
-        // covering the text the user just selected
-        placement: isMobile ? 'bottom-start' : 'top',
-        offset: isMobile ? [0, 8] : [0, 12],
+        // Desktop: float above selection · Mobile: sit at the bottom of the viewport
+        // to avoid covering the text or colliding with native copy/paste menus.
+        placement: isMobile ? 'top' : 'top',
+        offset: isMobile ? [0, 10] : [0, 12],
         maxWidth: 'calc(100vw - 2rem)',
         zIndex: 100,
-        // Capture the tippy instance so we can hide it programmatically
-        // on touchmove / viewport-resize events.
+        // On mobile, we override the reference rect to be the bottom of the viewport
+        ...(isMobile
+          ? {
+              getReferenceClientRect: () => {
+                const viewport = window.visualViewport;
+                const width = viewport ? viewport.width : window.innerWidth;
+                const height = viewport ? viewport.height : window.innerHeight;
+                // Return a 1px tall rect at the bottom center of the viewport
+                return {
+                  width: 0,
+                  height: 0,
+                  left: width / 2,
+                  right: width / 2,
+                  top: height,
+                  bottom: height,
+                  x: width / 2,
+                  y: height,
+                };
+              },
+            }
+          : {}),
+        // Capture the tippy instance
         onCreate(instance) {
           tippyRef.current = instance;
         },
@@ -192,24 +214,21 @@ function FormattingBubbleMenu({ editor }) {
           tippyRef.current = null;
         },
         // ── Mobile 200ms debounce ──
-        // Prevents our toolbar from colliding with the iOS native
-        // copy/paste menu that appears immediately on long-press.
-        // We intercept the first `show()` call, wait 200ms, then
-        // allow it through (via a one-shot flag on the instance).
+        // Only needed if we are still floating near the selection.
+        // If anchored to bottom, we can potentially remove this, but keeping it
+        // for safety against immediate-shows during selection changes.
         ...(isMobile
           ? {
               onShow(instance) {
-                // Second call (after debounce) — allow it through
                 if (instance._debounceAllowed) {
                   delete instance._debounceAllowed;
                   return;
                 }
-                // First call — block and schedule a delayed show
                 clearTimeout(debounceRef.current);
                 debounceRef.current = setTimeout(() => {
                   instance._debounceAllowed = true;
                   instance.show();
-                }, 200);
+                }, 150);
                 return false;
               },
               onHide() {
@@ -219,10 +238,9 @@ function FormattingBubbleMenu({ editor }) {
           : {}),
       }}
       className={clsx(
-        'max-w-full overflow-x-auto rounded-[16px] border border-line/40 bg-panel/95 shadow-floating backdrop-blur-xl z-[100]',
+        'overflow-x-auto rounded-[16px] border border-line/40 bg-panel/95 shadow-floating backdrop-blur-xl z-[100]',
         '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
-        // Slightly more padding on mobile for comfortable tapping
-        isMobile ? 'p-2' : 'p-1.5',
+        isMobile ? 'p-2 fixed-mobile-bar' : 'p-1.5',
       )}
     >
       <div

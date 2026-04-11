@@ -1151,3 +1151,26 @@ ul[data-type='taskList'] li > div {
   text-align: center;
   box-shadow: 0 1px 4px rgb(var(--color-ink) / 0.06);
 }
+
+/* Mobile Quick Bar (Anchored to Bottom) */
+.fixed-mobile-bar {
+  border-radius: 20px !important;
+  margin-bottom: constant(safe-area-inset-bottom);
+  margin-bottom: env(safe-area-inset-bottom);
+  padding: 10px !important;
+  box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(var(--color-line) / 0.6) !important;
+  background: rgb(var(--color-panel) / 0.98) !important;
+  animation: mobile-bar-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mobile-bar-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
