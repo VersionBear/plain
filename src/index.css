@@ -1174,3 +1174,12 @@ ul[data-type='taskList'] li > div {
     transform: translateY(0);
   }
 }
+
+/* Mobile FAB Trigger (Format button that appears on text selection) */
+.mobile-fab-trigger {
+  border-radius: 16px !important;
+  box-shadow: 0 12px 40px -4px rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(var(--color-line) / 0.6) !important;
+  background: rgb(var(--color-panel) / 0.98) !important;
+  animation: mobile-bar-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}

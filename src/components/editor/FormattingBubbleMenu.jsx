@@ -7,6 +7,8 @@ import {
   Heading1,
   Heading2,
   Quote,
+  Sparkles,
+  X,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useSettingsStore } from '../../store/useSettingsStore';
@@ -31,10 +33,18 @@ function FormattingBubbleMenu({ editor }) {
   const tippyRef = useRef(null);
   const debounceRef = useRef(null);
   const [isMobile, setIsMobile] = useState(getIsMobile);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // ── Mobile detection: re-evaluate on resize and pointer changes ──
   useEffect(() => {
-    const check = () => setIsMobile(getIsMobile());
+    const check = () => {
+      const wasMobile = isMobile;
+      setIsMobile(getIsMobile());
+      // Reset expanded state when switching to desktop
+      if (wasMobile && !getIsMobile()) {
+        setIsExpanded(false);
+      }
+    };
     window.addEventListener('resize', check);
     const mql = window.matchMedia('(pointer: coarse)');
     mql.addEventListener?.('change', check);
@@ -42,13 +52,14 @@ function FormattingBubbleMenu({ editor }) {
       window.removeEventListener('resize', check);
       mql.removeEventListener?.('change', check);
     };
-  }, []);
+  }, [isMobile]);
 
-  // ── Mobile: hide bubble on scroll/touchmove ──
+  // ── Mobile: hide bubble on scroll/touchmove, reset expanded state ──
   useEffect(() => {
     if (!isMobile) return;
 
     const hide = () => {
+      setIsExpanded(false);
       tippyRef.current?.hide();
       clearTimeout(debounceRef.current);
     };
@@ -124,7 +135,11 @@ function FormattingBubbleMenu({ editor }) {
     const { empty, node } = selection;
 
     // Selection must not be collapsed (must have actual text selected)
-    if (empty || to - from <= 0) return false;
+    if (empty || to - from <= 0) {
+      // On mobile, also reset expanded state when selection is collapsed
+      if (isMobile) setIsExpanded(false);
+      return false;
+    }
 
     // Block node selections (images, etc.)
     if (node) return false;
@@ -172,6 +187,196 @@ function FormattingBubbleMenu({ editor }) {
 
   const iconSize = 16;
 
+  // ── Mobile: render a small FAB trigger that expands to the full toolbar ──
+  if (isMobile) {
+    return (
+      <BubbleMenu
+        editor={editor}
+        pluginKey="formattingBubbleMenu"
+        shouldShow={shouldShow}
+        tippyOptions={{
+          duration: 150,
+          placement: 'top',
+          offset: [0, 10],
+          maxWidth: 'calc(100vw - 2rem)',
+          zIndex: 100,
+          getReferenceClientRect: () => {
+            const viewport = window.visualViewport;
+            const width = viewport ? viewport.width : window.innerWidth;
+            const height = viewport ? viewport.height : window.innerHeight;
+            return {
+              width: 0,
+              height: 0,
+              left: width / 2,
+              right: width / 2,
+              top: height,
+              bottom: height,
+              x: width / 2,
+              y: height,
+            };
+          },
+          onCreate(instance) {
+            tippyRef.current = instance;
+          },
+          onDestroy() {
+            tippyRef.current = null;
+          },
+          onShow(instance) {
+            if (instance._debounceAllowed) {
+              delete instance._debounceAllowed;
+              return;
+            }
+            clearTimeout(debounceRef.current);
+            debounceRef.current = setTimeout(() => {
+              instance._debounceAllowed = true;
+              instance.show();
+            }, 150);
+            return false;
+          },
+          onHide() {
+            clearTimeout(debounceRef.current);
+          },
+        }}
+        className={clsx(
+          'overflow-x-auto rounded-[16px] border border-line/40 bg-panel/95 shadow-floating backdrop-blur-xl z-[100]',
+          '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
+          isExpanded ? 'p-2 fixed-mobile-bar' : 'p-1.5 mobile-fab-trigger',
+        )}
+      >
+        {!isExpanded ? (
+          <button
+            type="button"
+            onClick={() => setIsExpanded(true)}
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/15 text-accent shadow-glow-sm transition-all duration-200 hover:scale-105 active:scale-95"
+            aria-label="Open formatting options"
+            title="Format"
+          >
+            <Sparkles size={18} />
+          </button>
+        ) : (
+          <div
+            ref={toolbarRef}
+            role="toolbar"
+            aria-label="Text formatting"
+            className="flex items-center gap-0.5"
+            onKeyDown={handleToolbarKeyDown}
+          >
+            <button
+              type="button"
+              onClick={() => setIsExpanded(false)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-ink/50 transition-all duration-200 hover:bg-line/40 hover:text-ink"
+              aria-label="Close formatting options"
+              title="Close"
+            >
+              <X size={16} />
+            </button>
+
+            <div
+              className="mx-1 h-5 w-[1px] shrink-0 bg-line/50"
+              aria-hidden="true"
+            />
+
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={actionButtonClass(editor.isActive('bold'))}
+              title="Bold"
+              aria-label="Bold"
+              aria-pressed={editor.isActive('bold')}
+            >
+              <Bold size={iconSize} className="shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={actionButtonClass(editor.isActive('italic'))}
+              title="Italic"
+              aria-label="Italic"
+              aria-pressed={editor.isActive('italic')}
+            >
+              <Italic size={iconSize} className="shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              onClick={setLink}
+              className={actionButtonClass(editor.isActive('link'))}
+              title="Link"
+              aria-label="Link"
+              aria-pressed={editor.isActive('link')}
+            >
+              <LinkIcon size={iconSize} className="shrink-0" />
+            </button>
+
+            <div
+              className="mx-1 h-5 w-[1px] shrink-0 bg-line/50"
+              aria-hidden="true"
+            />
+
+            <button
+              type="button"
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 1 }).run()
+              }
+              className={actionButtonClass(
+                editor.isActive('heading', { level: 1 }),
+              )}
+              title="Heading 1"
+              aria-label="Heading 1"
+              aria-pressed={editor.isActive('heading', { level: 1 })}
+            >
+              <Heading1 size={iconSize} className="shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                editor.chain().focus().toggleHeading({ level: 2 }).run()
+              }
+              className={actionButtonClass(
+                editor.isActive('heading', { level: 2 }),
+              )}
+              title="Heading 2"
+              aria-label="Heading 2"
+              aria-pressed={editor.isActive('heading', { level: 2 })}
+            >
+              <Heading2 size={iconSize} className="shrink-0" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              className={actionButtonClass(editor.isActive('blockquote'))}
+              title="Quote"
+              aria-label="Quote"
+              aria-pressed={editor.isActive('blockquote')}
+            >
+              <Quote size={iconSize} className="shrink-0" />
+            </button>
+
+            <div
+              className="mx-1 h-5 w-[1px] shrink-0 bg-line/50"
+              aria-hidden="true"
+            />
+
+            <button
+              type="button"
+              onClick={() => editor.chain().focus().toggleCode().run()}
+              className={actionButtonClass(editor.isActive('code'))}
+              title="Inline Code"
+              aria-label="Inline Code"
+              aria-pressed={editor.isActive('code')}
+            >
+              <Terminal size={iconSize} className="shrink-0" />
+            </button>
+          </div>
+        )}
+      </BubbleMenu>
+    );
+  }
+
+  // ── Desktop: original floating bubble ──
   return (
     <BubbleMenu
       editor={editor}
@@ -179,69 +384,18 @@ function FormattingBubbleMenu({ editor }) {
       shouldShow={shouldShow}
       tippyOptions={{
         duration: 150,
-        // Desktop: float above selection · Mobile: sit at the bottom of the viewport
-        // to avoid covering the text or colliding with native copy/paste menus.
-        placement: isMobile ? 'top' : 'top',
-        offset: isMobile ? [0, 10] : [0, 12],
+        placement: 'top',
+        offset: [0, 12],
         maxWidth: 'calc(100vw - 2rem)',
         zIndex: 100,
-        // On mobile, we override the reference rect to be the bottom of the viewport
-        ...(isMobile
-          ? {
-              getReferenceClientRect: () => {
-                const viewport = window.visualViewport;
-                const width = viewport ? viewport.width : window.innerWidth;
-                const height = viewport ? viewport.height : window.innerHeight;
-                // Return a 1px tall rect at the bottom center of the viewport
-                return {
-                  width: 0,
-                  height: 0,
-                  left: width / 2,
-                  right: width / 2,
-                  top: height,
-                  bottom: height,
-                  x: width / 2,
-                  y: height,
-                };
-              },
-            }
-          : {}),
-        // Capture the tippy instance
         onCreate(instance) {
           tippyRef.current = instance;
         },
         onDestroy() {
           tippyRef.current = null;
         },
-        // ── Mobile 200ms debounce ──
-        // Only needed if we are still floating near the selection.
-        // If anchored to bottom, we can potentially remove this, but keeping it
-        // for safety against immediate-shows during selection changes.
-        ...(isMobile
-          ? {
-              onShow(instance) {
-                if (instance._debounceAllowed) {
-                  delete instance._debounceAllowed;
-                  return;
-                }
-                clearTimeout(debounceRef.current);
-                debounceRef.current = setTimeout(() => {
-                  instance._debounceAllowed = true;
-                  instance.show();
-                }, 150);
-                return false;
-              },
-              onHide() {
-                clearTimeout(debounceRef.current);
-              },
-            }
-          : {}),
       }}
-      className={clsx(
-        'overflow-x-auto rounded-[16px] border border-line/40 bg-panel/95 shadow-floating backdrop-blur-xl z-[100]',
-        '[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
-        isMobile ? 'p-2 fixed-mobile-bar' : 'p-1.5',
-      )}
+      className="overflow-x-auto rounded-[16px] border border-line/40 bg-panel/95 p-1.5 shadow-floating backdrop-blur-xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
     >
       <div
         ref={toolbarRef}

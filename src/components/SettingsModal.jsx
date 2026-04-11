@@ -682,7 +682,7 @@ function SettingsModal({ isOpen, onClose, theme, setTheme, storageStatus, isHydr
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted/60">
                       Current Version
                     </p>
-                    <p className="text-sm font-semibold text-ink">v2.0</p>
+                    <p className="text-sm font-semibold text-ink">v2.0.2</p>
                   </div>
                 </div>
                 <div className="rounded-full bg-accent/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-accent">
